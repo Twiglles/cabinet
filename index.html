@@ -33,9 +33,27 @@ td.n,th.n{width:130px}td.d{width:44px}
 .tot{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid var(--bd);font:800 20px Montserrat,system-ui,sans-serif}
 .mu{color:var(--mu);font-size:13px}.er{color:var(--er)}.ok{color:var(--ok)}
 .row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1;min-width:140px}
-details{border-top:1px solid var(--bd);padding:12px 0}summary{cursor:pointer;display:flex;justify-content:space-between;gap:8px;font-weight:600}
+details{border-top:1px solid var(--bd);padding:12px 0}summary{cursor:pointer;display:flex;justify-content:space-between;gap:4px 8px;font-weight:600}
 .hide{display:none}
-@media(max-width:560px){td.n{width:96px}}
+#atabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;overflow:visible;margin-bottom:16px}#atabs button{padding:10px 4px;font-size:13px;white-space:normal;line-height:1.2}
+.mnav{display:grid;grid-template-columns:52px 1fr 52px;gap:8px;margin-bottom:16px}
+.mnav button{padding:0;min-height:48px;font-size:26px;line-height:1}.mnav select{font-weight:700;font-size:17px;text-align:center;text-align-last:center}
+.big{font:800 clamp(32px,9vw,44px)/1.05 Montserrat,system-ui,sans-serif;margin:2px 0 14px}
+.st{display:grid;grid-template-columns:1fr 1fr;gap:10px}.st>div{border:1px solid var(--bd);border-radius:4px;padding:10px 12px;background:var(--card2)}.st small{display:block;color:var(--mu);font-size:12px}.st b{font-size:17px}
+summary{align-items:center;flex-wrap:wrap;list-style:none}.det{flex:0 0 100%;margin-top:2px}.pr{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:2px 0}#alist details:first-child{border-top:0;padding-top:0}summary::-webkit-details-marker{display:none}summary .nm{font-weight:800;font-size:17px}
+summary>b{font-size:17px}
+td.p input,td.w input,td.n input{min-width:0}
+@media(max-width:560px){
+  .wrap{padding:16px 14px 32px}.card{padding:16px 14px}
+  .top .row{width:100%}.top .row button{padding:10px 8px;font-size:14px}
+  .row>*{min-width:100%}.top .row>*{min-width:0}
+  thead{display:none}
+  #tb tr{display:grid;grid-template-columns:1fr 112px 44px;gap:8px;padding:12px 0;border-top:1px solid var(--bd)}
+  #tb tr:first-child{border-top:0;padding-top:0}
+  #tb td{padding:0;width:auto}#tb td.p{grid-column:1/-1}#tb td.d{display:flex;align-items:center;justify-content:center}
+  #tb td.n input{text-align:right}
+  .tot{font-size:18px}
+}
 </style></head><body><div class="wrap">
 
 <div id="login" class="card hide" style="max-width:380px;margin:60px auto">
@@ -53,7 +71,7 @@ details{border-top:1px solid var(--bd);padding:12px 0}summary{cursor:pointer;dis
   <div id="atabs" class="tabs hide"><button data-v="sum" class="on">Все зарплаты</button><button data-v="usr">Сотрудники</button><button data-v="me">Моя оплата</button></div>
 
   <div id="vEmp">
-    <div id="mtabs" class="tabs"></div>
+    <div class="mnav"><button class="g" id="mprev" aria-label="Предыдущий месяц">‹</button><select id="msel" aria-label="Месяц"></select><button class="g" id="mnext" aria-label="Следующий месяц">›</button></div>
     <div class="card"><h2 id="mt"></h2>
       <table><thead><tr><th>Проект</th><th>Вид работы</th><th class="n">Сумма, ₽</th><th class="d"></th></tr></thead><tbody id="tb"></tbody></table>
       <div class="row" style="margin-top:10px"><button class="g" id="add" style="flex:none">+ Строка</button></div>
@@ -64,7 +82,8 @@ details{border-top:1px solid var(--bd);padding:12px 0}summary{cursor:pointer;dis
   </div>
 
   <div id="vSum" class="hide">
-    <div class="card"><div class="row" style="align-items:center"><select id="am"></select><div class="tot" style="margin:0"><span>Всего:&nbsp;</span><span id="gt"></span></div></div></div>
+    <div class="mnav"><button class="g" id="aprev" aria-label="Предыдущий месяц">‹</button><select id="am" aria-label="Месяц"></select><button class="g" id="anext" aria-label="Следующий месяц">›</button></div>
+    <div class="card" id="gtc"><h2>Всего за месяц</h2><div id="gt"></div></div>
     <div class="card" id="alist"></div>
   </div>
 
@@ -144,16 +163,20 @@ async function loadMine() {
   data = j.data || {}; pays = j.pays || {}; cs(key, { data, pays }); drawTabs(); drawMonth();
 }
 function drawTabs() {
-  $('mtabs').innerHTML = monthList().map(m => `<button data-m="${m}" class="${m === cur ? 'on' : ''}">${mlabel(m)}</button>`).join('');
-  $('mtabs').querySelectorAll('button').forEach(b => b.onclick = () => { flush(); cur = b.dataset.m; drawTabs(); drawMonth(); });
+  $('msel').innerHTML = monthList().map(m => `<option value="${m}">${mlabel(m)}</option>`).join('');
+  $('msel').value = cur;
 }
+const step = (sel, d) => { const i = sel.selectedIndex + d; if (i >= 0 && i < sel.options.length) { sel.selectedIndex = i; sel.dispatchEvent(new Event('change')); } };
+$('msel').onchange = () => { flush(); cur = $('msel').value; drawMonth(); };
+$('mprev').onclick = () => step($('msel'), 1); $('mnext').onclick = () => step($('msel'), -1);
+$('aprev').onclick = () => step($('am'), 1); $('anext').onclick = () => step($('am'), -1);
 const locked = () => S.role !== 'admin' && !S.editPast && cur < nowM();
 function drawMonth() {
   $('mt').textContent = mlabel(cur) + (target ? ' — ' + target : '');
   const rows = data[cur] && data[cur].length ? data[cur] : [{ p: '', w: '', a: '' }];
   data[cur] = rows;
-  $('tb').innerHTML = rows.map((r, i) => `<tr><td><input data-i="${i}" data-k="p" value="${esc(r.p)}" placeholder="Название проекта"></td>
-    <td><input data-i="${i}" data-k="w" value="${esc(r.w)}" placeholder="Вид работы"></td>
+  $('tb').innerHTML = rows.map((r, i) => `<tr><td class="p"><input data-i="${i}" data-k="p" value="${esc(r.p)}" placeholder="Название проекта"></td>
+    <td class="w"><input data-i="${i}" data-k="w" value="${esc(r.w)}" placeholder="Вид работы"></td>
     <td class="n"><input data-i="${i}" data-k="a" inputmode="decimal" value="${esc(r.a)}" placeholder="0"></td>
     <td class="d"><button class="x" data-del="${i}">✕</button></td></tr>`).join('');
   const lk = locked();
@@ -200,11 +223,11 @@ function drawSum(j) {
   const opened = new Set([...$('alist').querySelectorAll('details[open]')].map(d => d.dataset.ph));
   const e = (j.employees || []).filter(x => x.active || x.total).map(x => ({ ...x, paid: x.paid || 0, pays: x.pays || [] }));
   const gt = e.reduce((s, x) => s + x.total, 0), gp = e.reduce((s, x) => s + x.paid, 0);
-  $('gt').innerHTML = `${rub(gt)} <span class="mu">· выплачено ${rub(gp)} · осталось ${rub(gt - gp)}</span>`;
-  $('alist').innerHTML = e.length ? e.map(x => `<details data-ph="${x.phone}"${opened.has(x.phone) ? ' open' : ''}><summary><b>${esc(x.name)}</b><span><b>${rub(x.total)}</b> <span class="mu">· выплачено ${rub(x.paid)} · осталось ${rub(x.total - x.paid)}</span></span></summary>
+  $('gt').innerHTML = `<div class="big">${rub(gt)}</div><div class="st"><div><small>Выплачено</small><b class="ok">${rub(gp)}</b></div><div><small>Осталось</small><b>${rub(gt - gp)}</b></div></div>`;
+  $('alist').innerHTML = e.length ? e.map(x => `<details data-ph="${x.phone}"${opened.has(x.phone) ? ' open' : ''}><summary><span class="nm">${esc(x.name)}</span><b>${rub(x.total)}</b><span class="mu det">выплачено ${rub(x.paid)} · осталось ${rub(x.total - x.paid)}</span></summary>
     <table style="margin-top:6px">${x.rows.map(r => `<tr><td>${esc(r.p)}</td><td>${esc(r.w)}</td><td class="n" style="text-align:right">${rub(r.a)}</td></tr>`).join('') || '<tr><td class="mu">Записей нет</td></tr>'}</table>
     <div class="mu" style="margin-top:8px">Выплаты:</div>
-    ${x.pays.map(p => `<div class="row" style="align-items:center;padding:2px 0"><span>${esc(p.d)} — <b>${rub(p.a)}</b>${p.n ? ' · ' + esc(p.n) : ''}</span><button class="x" style="flex:none;min-width:0" data-delpay="${esc(p.id)}">✕</button></div>`).join('')}
+    ${x.pays.map(p => `<div class="pr"><span>${esc(p.d)} — <b>${rub(p.a)}</b>${p.n ? ' · ' + esc(p.n) : ''}</span><button class="x" data-delpay="${esc(p.id)}">✕</button></div>`).join('')}
     <div class="row" style="margin-top:6px"><input data-pa="${x.phone}" inputmode="decimal" placeholder="Сумма выплаты"><input data-pd="${x.phone}" type="date" value="${new Date().toISOString().slice(0, 10)}"><input data-pn="${x.phone}" placeholder="Комментарий"><button data-addpay="${x.phone}">Выплатить</button></div>
     <button class="g" data-edit="${x.phone}" style="margin-top:8px">Править таблицу сотрудника</button></details>`).join('') : '<span class="mu">Сотрудников пока нет</span>';
   $('alist').querySelectorAll('[data-addpay]').forEach(b => b.onclick = async () => {

@@ -35,7 +35,7 @@ td.n,th.n{width:130px}td.d{width:44px}
 .row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1;min-width:140px}
 details{border-top:1px solid var(--bd);padding:12px 0}summary{cursor:pointer;display:flex;justify-content:space-between;gap:4px 8px;font-weight:600}
 .hide{display:none}
-#ldm{display:none;font-size:15px;padding:8px 0}.ld #ldm{display:block}.ld #mt~*:not(#ldm){display:none}
+#ldm{display:none;font-size:15px;padding:8px 0}.ld #ldm{display:block}.ld #ldm~*{display:none}
 #atabs.hide{display:none}#atabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;overflow:visible;margin-bottom:16px}#atabs button{padding:10px 4px;font-size:13px;white-space:normal;line-height:1.2}
 h2.step{margin:0 0 8px}
 .mnav{display:grid;grid-template-columns:52px 1fr 52px;gap:8px;margin-bottom:16px}
@@ -84,7 +84,8 @@ td.p input,td.w input,td.n input{min-width:0}
   <div id="vEmp">
     <h2 class="step">1. Выберите месяц</h2>
     <div class="mnav"><button class="g" id="mprev" aria-label="Предыдущий месяц">‹</button><select id="msel" aria-label="Месяц"></select><button class="g" id="mnext" aria-label="Следующий месяц">›</button></div>
-    <div class="card"><h2 id="mt"></h2><div id="ldm" class="mu">Загружаю данные…</div>
+    <h2 id="mt" class="step" style="margin-top:20px"></h2>
+    <div class="card"><div id="ldm" class="mu">Загружаю данные…</div>
       <table><thead><tr><th>Проект</th><th>Вид работы</th><th class="n">Сумма, ₽</th><th class="d"></th></tr></thead><tbody id="tb"></tbody></table>
       <div class="row" style="margin-top:10px"><button class="g" id="add" style="flex:none">+ Строка</button></div>
       <div class="tot"><span>Начислено за месяц</span><span id="sum">0 ₽</span></div>

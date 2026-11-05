@@ -263,7 +263,7 @@ function drawSum(j) {
   const e = (j.employees || []).filter(x => x.active || x.total).map(x => ({ ...x, paid: x.paid || 0, pays: x.pays || [] }));
   const gt = e.reduce((s, x) => s + x.total, 0), gp = e.reduce((s, x) => s + x.paid, 0);
   $('gt').innerHTML = `<div class="big">${rub(gt)}</div>${bar(gt, gp)}<div class="st"><div><small>Выплачено · ${pct(gt, gp)}%</small><b class="ok">${rub(gp)}</b></div><div><small>Осталось</small><b>${rub(gt - gp)}</b></div></div>`;
-  $('alist').innerHTML = e.length ? e.map(x => `<details data-ph="${x.phone}"${opened.has(x.phone) ? ' open' : ''}><summary><span class="nm">${esc(x.name)}</span><b>${rub(x.total)}</b><i class="chev"></i>${bar(x.total, x.paid, 1)}<span class="mu det">выплачено ${rub(x.paid)} · осталось ${rub(x.total - x.paid)}</span></summary>
+  $('alist').innerHTML = e.length ? e.map(x => `<details data-ph="${x.phone}"${opened.has(x.phone) ? ' open' : ''}><summary><span class="nm">${esc(x.name)}</span><b>${rub(x.total)}</b><i class="chev"></i><span class="mu det">выплачено ${rub(x.paid)} · осталось ${rub(x.total - x.paid)}</span></summary>
     <table style="margin-top:6px">${x.rows.map(r => `<tr><td>${esc(r.p)}</td><td>${esc(r.w)}</td><td class="n" style="text-align:right">${rub(r.a)}</td></tr>`).join('') || '<tr><td class="mu">Записей нет</td></tr>'}</table>
     <div class="mu" style="margin-top:8px">Выплаты:</div>
     ${x.pays.map(p => `<div class="pr"><span>${esc(p.d)} — <b>${rub(p.a)}</b>${p.n ? ' · ' + esc(p.n) : ''}</span><button class="x" data-delpay="${esc(p.id)}">✕</button></div>`).join('')}

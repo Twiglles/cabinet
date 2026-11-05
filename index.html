@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Личный кабинет</title>
+<style>
+:root{--bg:#f5f6f8;--card:#fff;--tx:#1d2330;--mu:#6b7385;--ac:#2f6bff;--bd:#e1e4ea;--ok:#1a9d5c;--er:#d33}
+@media(prefers-color-scheme:dark){:root{--bg:#14171e;--card:#1c212b;--tx:#e8ebf2;--mu:#8e97ab;--bd:#2c3340}}
+*{box-sizing:border-box}body{margin:0;font:16px/1.4 system-ui,sans-serif;background:var(--bg);color:var(--tx)}
+.wrap{max-width:900px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:16px}
+h1{font-size:20px;margin:0}h2{font-size:17px;margin:0 0 12px}
+input,select{font:inherit;color:inherit;background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:9px 10px;width:100%}
+button{font:inherit;border:0;border-radius:8px;padding:9px 14px;background:var(--ac);color:#fff;cursor:pointer}
+button.g{background:transparent;color:var(--ac);border:1px solid var(--bd)}button.x{background:transparent;color:var(--er);padding:6px 10px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:12px}
+.tabs button{background:var(--card);color:var(--tx);border:1px solid var(--bd);white-space:nowrap}.tabs button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+table{width:100%;border-collapse:collapse}th{text-align:left;color:var(--mu);font-weight:500;font-size:13px;padding:4px}td{padding:4px}
+td.n,th.n{width:130px}td.d{width:44px}
+.tot{display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:18px;font-weight:600}
+.mu{color:var(--mu);font-size:14px}.er{color:var(--er)}.ok{color:var(--ok)}
+.row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1;min-width:140px}
+details{border-top:1px solid var(--bd);padding:8px 0}summary{cursor:pointer;display:flex;justify-content:space-between;gap:8px}
+.hide{display:none}
+@media(max-width:560px){td.n{width:90px}}
+</style></head><body><div class="wrap">
+
+<div id="login" class="card hide" style="max-width:380px;margin:60px auto">
+  <h1>Вход в кабинет</h1><p class="mu">Номер телефона и пароль выдаёт администратор.</p>
+  <div class="row" style="flex-direction:column"><input id="ph" type="tel" placeholder="Телефон: +7 900 000-00-00" autocomplete="username">
+  <input id="pw" type="password" placeholder="Пароль" autocomplete="current-password"><button id="go">Войти</button></div>
+  <p id="lerr" class="er"></p>
+</div>
+
+<div id="app" class="hide">
+  <div class="top"><div><h1 id="who"></h1><div class="mu" id="role"></div></div>
+  <div class="row" style="flex:none"><button class="g" id="pwbtn">Сменить пароль</button><button class="g" id="out">Выйти</button></div></div>
+  <div id="pwbox" class="card hide"><h2>Смена пароля</h2><div class="row"><input id="op" type="password" placeholder="Текущий пароль"><input id="np" type="password" placeholder="Новый (от 6 знаков)"><button id="pws">Сохранить</button></div><p id="pwm"></p></div>
+  <div id="atabs" class="tabs hide"><button data-v="sum" class="on">Все зарплаты</button><button data-v="usr">Сотрудники</button><button data-v="me">Мой кабинет</button></div>
+
+  <div id="vEmp">
+    <div id="mtabs" class="tabs"></div>
+    <div class="card"><h2 id="mt"></h2>
+      <table><thead><tr><th>Проект</th><th>Вид работы</th><th class="n">Сумма, ₽</th><th class="d"></th></tr></thead><tbody id="tb"></tbody></table>
+      <div class="row" style="margin-top:10px"><button class="g" id="add" style="flex:none">+ Строка</button></div>
+      <div class="tot"><span>Итого за месяц</span><span id="sum">0 ₽</span></div>
+      <div class="mu" id="st" style="margin-top:6px"></div>
+    </div>
+  </div>
+
+  <div id="vSum" class="hide">
+    <div class="card"><div class="row" style="align-items:center"><select id="am"></select><div class="tot" style="margin:0"><span>Всего:&nbsp;</span><span id="gt"></span></div></div></div>
+    <div class="card" id="alist"></div>
+  </div>
+
+  <div id="vUsr" class="hide">
+    <div class="card"><h2>Добавить / обновить сотрудника</h2>
+      <div class="row"><input id="un" placeholder="Имя"><input id="up" type="tel" placeholder="Телефон"><input id="upw" placeholder="Пароль (от 6 знаков)"><button id="us">Сохранить</button></div>
+      <p class="mu">Чтобы сбросить пароль, введите тот же телефон и новый пароль.</p><p id="um"></p></div>
+    <div class="card" id="ulist"></div>
+  </div>
+</div>
+</div>
+<script>
+const API = 'https://script.google.com/macros/s/AKfycbxLZjrCJ_-ta8eU5NMERKij92S5amhj4pfKGOxrmwjVSPz0KjO8t-9m-b_On4yNY1H9/exec';
+const $ = id => document.getElementById(id);
+const MN = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+const rub = n => (Math.round(n * 100) / 100).toLocaleString('ru-RU') + ' ₽';
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const mlabel = m => MN[+m.slice(5) - 1] + ' ' + m.slice(0, 4);
+let S = null, data = {}, cur = '', timer = null, target = null; // target: телефон сотрудника, которого правит админ (null = сам)
+
+async function api(action, body = {}) {
+  if (!API) throw new Error('Не указан адрес сервера (const API в index.html)');
+  const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action, token: S && S.token, ...body }) });
+  const j = await r.json();
+  if (j.error === 'auth') { logout(); throw new Error('Сессия истекла, войдите снова'); }
+  return j;
+}
+function save() { try { sessionStorage.setItem('s', JSON.stringify(S)); } catch (e) {} }
+function logout() { S = null; try { sessionStorage.removeItem('s'); } catch (e) {} show(); }
+function show() {
+  $('login').classList.toggle('hide', !!S); $('app').classList.toggle('hide', !S);
+  if (!S) return;
+  $('who').textContent = S.name; $('role').textContent = S.role === 'admin' ? 'Администратор' : 'Сотрудник';
+  $('atabs').classList.toggle('hide', S.role !== 'admin');
+  view(S.role === 'admin' ? 'sum' : 'me');
+}
+$('go').onclick = async () => {
+  $('lerr').textContent = '';
+  try {
+    const j = await api('login', { phone: $('ph').value, password: $('pw').value });
+    if (j.error) { $('lerr').textContent = j.error === 'locked' ? 'Слишком много попыток. Подождите 15 минут.' : 'Неверный телефон или пароль'; return; }
+    S = j; save(); $('pw').value = ''; show();
+  } catch (e) { $('lerr').textContent = e.message; }
+};
+$('pw').onkeydown = e => { if (e.key === 'Enter') $('go').click(); };
+$('out').onclick = logout;
+$('pwbtn').onclick = () => $('pwbox').classList.toggle('hide');
+$('pws').onclick = async () => {
+  const j = await api('changePassword', { oldPassword: $('op').value, newPassword: $('np').value });
+  $('pwm').textContent = j.ok ? 'Пароль изменён' : j.error === 'short' ? 'Новый пароль слишком короткий' : 'Текущий пароль неверный';
+  $('pwm').className = j.ok ? 'ok' : 'er'; if (j.ok) { $('op').value = $('np').value = ''; }
+};
+document.querySelectorAll('#atabs button').forEach(b => b.onclick = () => view(b.dataset.v));
+function view(v) {
+  document.querySelectorAll('#atabs button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+  $('vEmp').classList.toggle('hide', v !== 'me'); $('vSum').classList.toggle('hide', v !== 'sum'); $('vUsr').classList.toggle('hide', v !== 'usr');
+  if (v === 'me') { target = null; loadMine(); } else if (v === 'sum') loadSum(); else loadUsers();
+}
+
+function monthList() {
+  const now = new Date(), set = new Set(Object.keys(data));
+  for (let i = 0; i < 12; i++) { const d = new Date(now.getFullYear(), now.getMonth() - i, 1); set.add(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0')); }
+  return [...set].sort().reverse();
+}
+const nowM = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); };
+async function loadMine() {
+  const j = target ? await api('adminEmployeeMonths', { phone: target }) : await api('myMonths');
+  data = j.data || {}; if (!cur) cur = nowM(); drawTabs(); drawMonth();
+}
+function drawTabs() {
+  $('mtabs').innerHTML = monthList().map(m => `<button data-m="${m}" class="${m === cur ? 'on' : ''}">${mlabel(m)}</button>`).join('');
+  $('mtabs').querySelectorAll('button').forEach(b => b.onclick = () => { flush(); cur = b.dataset.m; drawTabs(); drawMonth(); });
+}
+const locked = () => S.role !== 'admin' && !S.editPast && cur < nowM();
+function drawMonth() {
+  $('mt').textContent = mlabel(cur) + (target ? ' — ' + target : '');
+  const rows = data[cur] && data[cur].length ? data[cur] : [{ p: '', w: '', a: '' }];
+  data[cur] = rows;
+  $('tb').innerHTML = rows.map((r, i) => `<tr><td><input data-i="${i}" data-k="p" value="${esc(r.p)}" placeholder="Название проекта"></td>
+    <td><input data-i="${i}" data-k="w" value="${esc(r.w)}" placeholder="Вид работы"></td>
+    <td class="n"><input data-i="${i}" data-k="a" inputmode="decimal" value="${esc(r.a)}" placeholder="0"></td>
+    <td class="d"><button class="x" data-del="${i}">✕</button></td></tr>`).join('');
+  const lk = locked();
+  $('tb').querySelectorAll('input').forEach(inp => { inp.disabled = lk; inp.oninput = () => { data[cur][+inp.dataset.i][inp.dataset.k] = inp.value; total(); dirty(); }; });
+  $('tb').querySelectorAll('[data-del]').forEach(b => { b.disabled = lk; b.onclick = () => { data[cur].splice(+b.dataset.del, 1); drawMonth(); dirty(); }; });
+  $('add').disabled = lk; $('st').textContent = lk ? 'Этот месяц закрыт для правок' : ''; total();
+}
+const num = v => Number(String(v).replace(/\s/g, '').replace(',', '.')) || 0;
+function total() { $('sum').textContent = rub((data[cur] || []).reduce((s, r) => s + num(r.a), 0)); }
+$('add').onclick = () => { data[cur].push({ p: '', w: '', a: '' }); drawMonth(); dirty(); };
+function dirty() { $('st').textContent = 'Сохранение…'; $('st').className = 'mu'; clearTimeout(timer); timer = setTimeout(flush, 1200); }
+async function flush() {
+  if (!timer) return; clearTimeout(timer); timer = null;
+  try {
+    const j = await api('saveMonth', { month: cur, phone: target || undefined, rows: data[cur].map(r => ({ p: r.p, w: r.w, a: num(r.a) })) });
+    $('st').textContent = j.error ? 'Не сохранено: ' + j.error : 'Сохранено ✓'; $('st').className = j.error ? 'er' : 'ok';
+  } catch (e) { $('st').textContent = 'Не сохранено: ' + e.message; $('st').className = 'er'; }
+}
+addEventListener('beforeunload', () => { if (timer) flush(); });
+
+async function loadSum() {
+  const sel = $('am'); if (!sel.options.length) { sel.innerHTML = monthList().map(m => `<option value="${m}">${mlabel(m)}</option>`).join(''); sel.value = nowM(); sel.onchange = loadSum; }
+  $('alist').textContent = 'Загрузка…';
+  const j = await api('adminMonth', { month: sel.value });
+  const e = (j.employees || []).filter(x => x.active || x.total);
+  $('gt').textContent = rub(e.reduce((s, x) => s + x.total, 0));
+  $('alist').innerHTML = e.length ? e.map(x => `<details><summary><b>${esc(x.name)}</b><span><b>${rub(x.total)}</b></span></summary>
+    <table style="margin-top:6px">${x.rows.map(r => `<tr><td>${esc(r.p)}</td><td>${esc(r.w)}</td><td class="n" style="text-align:right">${rub(r.a)}</td></tr>`).join('') || '<tr><td class="mu">Записей нет</td></tr>'}</table>
+    <button class="g" data-edit="${x.phone}" style="margin-top:8px">Править таблицу сотрудника</button></details>`).join('') : '<span class="mu">Сотрудников пока нет</span>';
+  $('alist').querySelectorAll('[data-edit]').forEach(b => b.onclick = () => { target = b.dataset.edit; cur = sel.value; view2(); });
+}
+function view2() { document.querySelectorAll('#atabs button').forEach(b => b.classList.remove('on')); $('vEmp').classList.remove('hide'); $('vSum').classList.add('hide'); $('vUsr').classList.add('hide'); loadMine(); }
+async function loadUsers() {
+  const j = await api('adminUsers');
+  $('ulist').innerHTML = (j.users || []).map(u => `<div class="row" style="align-items:center;border-top:1px solid var(--bd);padding:6px 0">
+    <div><b>${esc(u.name)}</b> <span class="mu">+${esc(u.phone)}${u.role === 'admin' ? ' · админ' : ''}</span></div>
+    ${u.role === 'admin' ? '' : `<button class="g" style="flex:none" data-act="${u.phone}" data-on="${u.active}">${u.active ? 'Отключить' : 'Включить'}</button>`}</div>`).join('');
+  $('ulist').querySelectorAll('[data-act]').forEach(b => b.onclick = async () => { await api('adminSaveUser', { phone: b.dataset.act, active: b.dataset.on !== 'true' }); loadUsers(); });
+}
+$('us').onclick = async () => {
+  const j = await api('adminSaveUser', { name: $('un').value, phone: $('up').value, password: $('upw').value });
+  $('um').textContent = j.ok ? 'Сохранено' : ({ phone: 'Неверный номер', short: 'Пароль короче 6 знаков' }[j.error] || j.error); $('um').className = j.ok ? 'ok' : 'er';
+  if (j.ok) { $('un').value = $('up').value = $('upw').value = ''; loadUsers(); }
+};
+
+try { const s = sessionStorage.getItem('s'); if (s) S = JSON.parse(s); } catch (e) {}
+show();
+</script></body></html>

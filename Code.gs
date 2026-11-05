@@ -15,6 +15,16 @@ var USERS_H = ['phone', 'name', 'role', 'salt', 'hash', 'active'];
 var ROWS_H = ['phone', 'month', 'project', 'work', 'amount', 'updatedAt'];
 var PAY_H = ['id', 'phone', 'month', 'amount', 'date', 'note'];
 function paysSheet() { return sh('Выплаты', PAY_H); }
+var SESS_H = ['hash', 'phone', 'exp'];
+var REMEMBER_DAYS = 30;
+function sessSheet() { return sh('Сессии', SESS_H); }
+function tokHash(t) { return hash('sess', t); }
+function delSessions(phone, h) {
+  var s = sessSheet(), n = s.getLastRow();
+  if (n < 2) return;
+  var v = s.getRange(2, 1, n - 1, 3).getValues(), now = Date.now();
+  for (var i = v.length - 1; i >= 0; i--) if (String(v[i][1]) === phone && !h || String(v[i][0]) === h || Number(v[i][2]) < now) s.deleteRow(i + 2);
+}
 function users() { return sh('Сотрудники', USERS_H); }
 function rows() { return sh('Записи', ROWS_H); }
 function ms(v) { return v instanceof Date ? Utilities.formatDate(v, SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone(), 'yyyy-MM') : String(v); }
@@ -38,6 +48,7 @@ function findUser(phone) {
 }
 function putUser(phone, name, role, pass) {
   CacheService.getScriptCache().remove('u_' + phone);
+  delSessions(phone, '');
   var salt = Utilities.getUuid(), h = hash(salt, pass), u = findUser(phone), s = users();
   if (u) s.getRange(u.row, 1, 1, 6).setValues([[phone, name || u.name, role || u.role, salt, h, true]]);
   else { s.appendRow([phone, name, role || 'user', salt, h, true]); s.getRange(s.getLastRow(), 1).setNumberFormat('@').setValue(phone); }
@@ -54,13 +65,14 @@ function doGet() { return out({ ok: true, app: 'kabinet', adminSet: users().getL
 
 function doPost(e) {
   var b; try { b = JSON.parse(e.postData.contents); } catch (x) { return out({ error: 'bad' }); }
-  var W = { adminAddPay: 1, adminDelPay: 1, saveMonth: 1, changePassword: 1, adminSaveUser: 1 }, lock = null;
+  var W = { logout: 1, adminAddPay: 1, adminDelPay: 1, saveMonth: 1, changePassword: 1, adminSaveUser: 1 }, lock = null;
   if (W[b.action]) { lock = LockService.getScriptLock(); lock.waitLock(20000); }
   try {
     if (b.action === 'login') return out(login(b));
     var me = auth(b.token);
     if (!me) return out({ error: 'auth' });
     switch (b.action) {
+      case 'logout': return out(logout(b));
       case 'myMonths': return out({ data: myMonths(me.phone), pays: myPays(me.phone) });
       case 'saveMonth': return out(saveMonth(me, b));
       case 'changePassword': return out(changePassword(me, b));
@@ -87,6 +99,10 @@ function login(b) {
   c.remove(fk);
   var t = Utilities.getUuid() + Utilities.getUuid();
   c.put('t_' + t, phone, SESSION_SEC);
+  if (b.remember) {
+    var ss = sessSheet(), r = ss.getLastRow() + 1;
+    ss.getRange(r, 1, 1, 3).setNumberFormat('@').setValues([[tokHash(t), phone, String(Date.now() + REMEMBER_DAYS * 86400000)]]);
+  }
   var res = { token: t, name: u.name, role: u.role, phone: phone, editPast: EDIT_PAST_MONTHS, data: myMonths(phone), pays: myPays(phone) };
   if (u.role === 'admin') { res.sumMonth = curMonth(); res.sum = adminMonth(res.sumMonth); }
   return res;
@@ -94,7 +110,14 @@ function login(b) {
 function auth(t) {
   if (!t) return null;
   var c = CacheService.getScriptCache(), phone = c.get('t_' + t);
-  if (!phone) return null;
+  if (!phone) {
+    var ss = sessSheet(), n = ss.getLastRow(), h = tokHash(t);
+    if (n < 2) return null;
+    var v = ss.getRange(2, 1, n - 1, 3).getValues();
+    for (var i = 0; i < v.length; i++) if (String(v[i][0]) === h && Number(v[i][2]) > Date.now()) { phone = String(v[i][1]); break; }
+    if (!phone) return null;
+    c.put('t_' + t, phone, SESSION_SEC);
+  }
   var j = c.get('u_' + phone);
   if (j) return JSON.parse(j);
   var u = findUser(phone);
@@ -159,6 +182,11 @@ function saveMonth(me, b) {
     s.getRange(start, 1, add.length, 6).setValues(add);
   }
   return { saved: add.length };
+}
+function logout(b) {
+  CacheService.getScriptCache().remove('t_' + b.token);
+  delSessions('', tokHash(b.token));
+  return { ok: true };
 }
 function changePassword(me, b) {
   if (!b.newPassword || String(b.newPassword).length < 6) return { error: 'short' };

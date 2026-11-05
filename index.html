@@ -35,6 +35,8 @@ td.n,th.n{width:130px}td.d{width:44px}
 .row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1;min-width:140px}
 details{border-top:1px solid var(--bd);padding:12px 0}summary{cursor:pointer;display:flex;justify-content:space-between;gap:4px 8px;font-weight:600}
 .hide{display:none}
+.ur{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--bd)}.ur:first-child{border-top:0;padding-top:0}.ur:last-child{padding-bottom:0}.ur.off>div:first-child{opacity:.55}
+.sw{width:52px;height:30px;border-radius:15px;padding:0;background:#cfcfcc;border:0;position:relative;flex:none;transition:background .2s}.sw i{position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .2s}.sw.on{background:var(--ok)}.sw.on i{transform:translateX(22px)}.sw:hover{background:#c2c2bf}.sw.on:hover{background:var(--ok)}
 .prog{height:8px;border-radius:4px;background:#e4e4e1;overflow:hidden;margin:0 0 14px}.prog i{display:block;height:100%;background:var(--ok);border-radius:4px;transition:width .3s}
 .pl{margin-top:14px;padding-top:12px;border-top:1px solid var(--bd);font-size:14px}.pl>div{display:flex;justify-content:space-between;gap:10px;padding:3px 0}.pl span{color:var(--mu)}
 #ldm{display:none;font-size:15px;padding:8px 0}.ld #ldm{display:block}.ld #ldm~*{display:none}
@@ -118,6 +120,7 @@ details[open] .chev::after{transform:rotate(-135deg);top:9px}
     <div class="card"><h2>Добавить / обновить сотрудника</h2>
       <div class="row"><input id="un" placeholder="Имя"><input id="up" type="tel" placeholder="Телефон"><input id="upw" placeholder="Пароль (от 6 знаков)"><button id="us">Сохранить</button></div>
       <p class="mu">Чтобы сбросить пароль, введите тот же телефон и новый пароль.</p><p id="um"></p></div>
+    <h2 class="step" style="margin-top:20px">Список сотрудников</h2>
     <div class="card" id="ulist"></div>
   </div>
 </div>
@@ -281,10 +284,9 @@ function view2() { document.querySelectorAll('#atabs button').forEach(b => b.cla
 async function loadUsers() {
   $('ulist').innerHTML = '<span class="mu">Загружаю данные…</span>';
   const j = await api('adminUsers');
-  $('ulist').innerHTML = (j.users || []).map(u => `<div class="row" style="align-items:center;border-top:1px solid var(--bd);padding:6px 0">
-    <div><b>${esc(u.name)}</b> <span class="mu">+${esc(u.phone)}${u.role === 'admin' ? ' · админ' : ''}</span></div>
-    ${u.role === 'admin' ? '' : `<button class="g" style="flex:none" data-act="${u.phone}" data-on="${u.active}">${u.active ? 'Отключить' : 'Включить'}</button>`}</div>`).join('');
-  $('ulist').querySelectorAll('[data-act]').forEach(b => b.onclick = async () => { await api('adminSaveUser', { phone: b.dataset.act, active: b.dataset.on !== 'true' }); loadUsers(); });
+  $('ulist').innerHTML = (j.users || []).map(u => `<div class="ur${u.active ? '' : ' off'}"><div><b>${esc(u.name)}</b><div class="mu">+${esc(u.phone)} · ${u.role === 'admin' ? 'админ' : u.active ? 'доступ открыт' : 'доступ отключён'}</div></div>
+    ${u.role === 'admin' ? '' : `<button class="sw${u.active ? ' on' : ''}" role="switch" aria-checked="${u.active}" aria-label="Доступ сотрудника" data-act="${u.phone}" data-on="${u.active}"><i></i></button>`}</div>`).join('');
+  $('ulist').querySelectorAll('[data-act]').forEach(b => b.onclick = async () => { b.classList.toggle('on'); b.disabled = true; await api('adminSaveUser', { phone: b.dataset.act, active: b.dataset.on !== 'true' }); loadUsers(); });
 }
 $('us').onclick = async () => {
   const j = await api('adminSaveUser', { name: $('un').value, phone: $('up').value, password: $('upw').value });

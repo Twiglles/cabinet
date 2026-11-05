@@ -87,7 +87,9 @@ function login(b) {
   c.remove(fk);
   var t = Utilities.getUuid() + Utilities.getUuid();
   c.put('t_' + t, phone, SESSION_SEC);
-  return { token: t, name: u.name, role: u.role, phone: phone, editPast: EDIT_PAST_MONTHS };
+  var res = { token: t, name: u.name, role: u.role, phone: phone, editPast: EDIT_PAST_MONTHS, data: myMonths(phone), pays: myPays(phone) };
+  if (u.role === 'admin') { res.sumMonth = curMonth(); res.sum = adminMonth(res.sumMonth); }
+  return res;
 }
 function auth(t) {
   if (!t) return null;

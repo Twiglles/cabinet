@@ -35,6 +35,9 @@ td.n,th.n{width:130px}td.d{width:44px}
 .row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1;min-width:140px}
 details{border-top:1px solid var(--bd);padding:12px 0}summary{cursor:pointer;display:flex;justify-content:space-between;gap:4px 8px;font-weight:600}
 .hide{display:none}
+.bar{height:8px;border-radius:4px;background:#e4e4e1;overflow:hidden;margin:0 0 14px}.bar i{display:block;height:100%;background:var(--ok);border-radius:4px;transition:width .3s}
+.bar.sm{grid-column:1/-1;height:6px;margin:6px 0 4px}
+.pl{margin-top:14px;padding-top:12px;border-top:1px solid var(--bd);font-size:14px}.pl>div{display:flex;justify-content:space-between;gap:10px;padding:3px 0}.pl span{color:var(--mu)}
 #ldm{display:none;font-size:15px;padding:8px 0}.ld #ldm{display:block}.ld #ldm~*{display:none}
 #atabs.hide{display:none}#atabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;overflow:visible;margin-bottom:16px}#atabs button{padding:10px 4px;font-size:13px;white-space:normal;line-height:1.2}
 h2.step{margin:0 0 8px}
@@ -99,10 +102,9 @@ details[open] .chev::after{transform:rotate(-135deg);top:9px}
     <div class="card"><div id="ldm" class="mu">Загружаю данные…</div>
       <table><thead><tr><th>Проект</th><th>Вид работы</th><th class="n">Сумма, ₽</th><th class="d"></th></tr></thead><tbody id="tb"></tbody></table>
       <div class="row" style="margin-top:10px"><button class="g" id="add" style="flex:none">+ Строка</button></div>
-      <div class="tot"><span>Начислено за месяц</span><span id="sum">0 ₽</span></div>
-      <div id="pay"></div>
       <div class="mu" id="st" style="margin-top:6px"></div>
     </div>
+    <div class="card" id="pay"></div>
   </div>
 
   <div id="vSum" class="hide">
@@ -152,7 +154,10 @@ $('go').onclick = async () => {
   try {
     const j = await api('login', { phone: $('ph').value, password: $('pw').value });
     if (j.error) { $('lerr').textContent = j.error === 'locked' ? 'Слишком много попыток. Подождите 15 минут.' : 'Неверный телефон или пароль'; return; }
-    S = j; save(); $('pw').value = ''; show();
+    S = j; $('pw').value = '';
+    cs('m' + j.phone, { data: j.data || {}, pays: j.pays || {} });
+    if (j.sum) cs('s' + j.sumMonth, j.sum);
+    delete S.data; delete S.pays; delete S.sum; save(); show();
   } catch (e) { $('lerr').textContent = e.message; }
 };
 $('pw').onkeydown = e => { if (e.key === 'Enter') $('go').click(); };
@@ -217,13 +222,15 @@ function drawMonth() {
   $('add').disabled = lk; $('st').textContent = lk ? 'Этот месяц закрыт для правок' : ''; total();
 }
 const num = v => Number(String(v).replace(/\s/g, '').replace(',', '.')) || 0;
+const pct = (t, p) => t > 0 ? Math.min(100, Math.round(p / t * 100)) : 0;
+const bar = (t, p, sm) => `<div class="bar${sm ? ' sm' : ''}"><i style="width:${pct(t, p)}%"></i></div>`;
 function total() {
-  const t = (data[cur] || []).reduce((s, r) => s + num(r.a), 0), ps = pays[cur] || [], paid = ps.reduce((s, p) => s + p.a, 0);
-  $('sum').textContent = rub(t);
-  $('pay').innerHTML = `<div class="tot" style="font-size:16px"><span>Выплачено</span><span class="ok">${rub(paid)}</span></div>
-    <div class="tot" style="font-size:16px"><span>Осталось выплатить</span><span>${rub(t - paid)}</span></div>` +
-    (ps.length ? `<div class="mu" style="margin-top:8px">${ps.map(p => `${esc(p.d)} — ${rub(p.a)}${p.n ? ' · ' + esc(p.n) : ''}`).join('<br>')}</div>` : '');
+  const t = (data[cur] || []).reduce((s, r) => s + num(r.a), 0), ps = pays[cur] || [], paid = ps.reduce((s, p) => s + p.a, 0), done = t > 0 && paid >= t;
+  $('pay').innerHTML = `<h2>Расчёт за месяц</h2><div class="big">${rub(t)}</div>${bar(t, paid)}
+    <div class="st"><div><small>Выплачено · ${pct(t, paid)}%</small><b class="ok">${rub(paid)}</b></div><div><small>Осталось выплатить</small><b>${done ? 'всё выплачено ✓' : rub(t - paid)}</b></div></div>` +
+    (ps.length ? `<div class="pl">${ps.map(p => `<div><span>${esc(p.d)}${p.n ? ' · ' + esc(p.n) : ''}</span><b>${rub(p.a)}</b></div>`).join('')}</div>` : '');
 }
+
 $('add').onclick = () => { data[cur].push({ p: '', w: '', a: '' }); drawMonth(); dirty(); };
 function dirty() { $('st').textContent = 'Сохранение…'; $('st').className = 'mu'; clearTimeout(timer); timer = setTimeout(flush, 1200); }
 let queue = Promise.resolve();
@@ -255,8 +262,8 @@ function drawSum(j) {
   const opened = new Set([...$('alist').querySelectorAll('details[open]')].map(d => d.dataset.ph));
   const e = (j.employees || []).filter(x => x.active || x.total).map(x => ({ ...x, paid: x.paid || 0, pays: x.pays || [] }));
   const gt = e.reduce((s, x) => s + x.total, 0), gp = e.reduce((s, x) => s + x.paid, 0);
-  $('gt').innerHTML = `<div class="big">${rub(gt)}</div><div class="st"><div><small>Выплачено</small><b class="ok">${rub(gp)}</b></div><div><small>Осталось</small><b>${rub(gt - gp)}</b></div></div>`;
-  $('alist').innerHTML = e.length ? e.map(x => `<details data-ph="${x.phone}"${opened.has(x.phone) ? ' open' : ''}><summary><span class="nm">${esc(x.name)}</span><b>${rub(x.total)}</b><i class="chev"></i><span class="mu det">выплачено ${rub(x.paid)} · осталось ${rub(x.total - x.paid)}</span></summary>
+  $('gt').innerHTML = `<div class="big">${rub(gt)}</div>${bar(gt, gp)}<div class="st"><div><small>Выплачено · ${pct(gt, gp)}%</small><b class="ok">${rub(gp)}</b></div><div><small>Осталось</small><b>${rub(gt - gp)}</b></div></div>`;
+  $('alist').innerHTML = e.length ? e.map(x => `<details data-ph="${x.phone}"${opened.has(x.phone) ? ' open' : ''}><summary><span class="nm">${esc(x.name)}</span><b>${rub(x.total)}</b><i class="chev"></i>${bar(x.total, x.paid, 1)}<span class="mu det">выплачено ${rub(x.paid)} · осталось ${rub(x.total - x.paid)}</span></summary>
     <table style="margin-top:6px">${x.rows.map(r => `<tr><td>${esc(r.p)}</td><td>${esc(r.w)}</td><td class="n" style="text-align:right">${rub(r.a)}</td></tr>`).join('') || '<tr><td class="mu">Записей нет</td></tr>'}</table>
     <div class="mu" style="margin-top:8px">Выплаты:</div>
     ${x.pays.map(p => `<div class="pr"><span>${esc(p.d)} — <b>${rub(p.a)}</b>${p.n ? ' · ' + esc(p.n) : ''}</span><button class="x" data-delpay="${esc(p.id)}">✕</button></div>`).join('')}

@@ -130,7 +130,7 @@ function show() {
   if (!S) return;
   $('who').textContent = S.name; $('role').textContent = S.role === 'admin' ? 'Администратор' : 'Сотрудник';
   $('atabs').classList.toggle('hide', S.role !== 'admin');
-  $('ttl').innerHTML = S.role === 'admin' ? '<mark>Зарплаты</mark>' : 'Моя <mark>оплата</mark>';
+  $('ttl').textContent = S.name;
   view(S.role === 'admin' ? 'sum' : 'me');
 }
 $('go').onclick = async () => {

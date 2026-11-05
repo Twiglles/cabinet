@@ -213,7 +213,7 @@ function drawMonth() {
   data[cur] = rows;
   $('tb').innerHTML = rows.map((r, i) => `<tr><td class="p"><input data-i="${i}" data-k="p" value="${esc(r.p)}" placeholder="Название проекта"></td>
     <td class="w"><input data-i="${i}" data-k="w" value="${esc(r.w)}" placeholder="Вид работы"></td>
-    <td class="n"><input data-i="${i}" data-k="a" inputmode="decimal" value="${esc(r.a)}" placeholder="0"></td>
+    <td class="n"><input data-i="${i}" data-k="a" inputmode="decimal" value="${esc(r.a)}" placeholder="Сумма, ₽"></td>
     <td class="d"><button class="x" data-del="${i}">✕</button></td></tr>`).join('');
   const lk = locked();
   $('tb').querySelectorAll('input').forEach(inp => { inp.disabled = lk; inp.oninput = () => { data[cur][+inp.dataset.i][inp.dataset.k] = inp.value; total(); dirty(); }; });

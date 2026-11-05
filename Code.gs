@@ -13,6 +13,8 @@ function sh(name, head) {
 }
 var USERS_H = ['phone', 'name', 'role', 'salt', 'hash', 'active'];
 var ROWS_H = ['phone', 'month', 'project', 'work', 'amount', 'updatedAt'];
+var PAY_H = ['id', 'phone', 'month', 'amount', 'date', 'note'];
+function paysSheet() { return sh('Выплаты', PAY_H); }
 function users() { return sh('Сотрудники', USERS_H); }
 function rows() { return sh('Записи', ROWS_H); }
 function ms(v) { return v instanceof Date ? Utilities.formatDate(v, SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone(), 'yyyy-MM') : String(v); }
@@ -42,6 +44,7 @@ function putUser(phone, name, role, pass) {
 }
 
 function setupAdmin() {
+  paysSheet();
   if (ADMIN_PASSWORD.indexOf('ЗАМЕНИТЕ') === 0 || ADMIN_PASSWORD.length < 6) throw new Error('Впишите пароль админа (от 6 знаков)');
   users(); rows();
   putUser(normPhone(ADMIN_PHONE), ADMIN_NAME, 'admin', ADMIN_PASSWORD);
@@ -51,20 +54,22 @@ function doGet() { return out({ ok: true, app: 'kabinet', adminSet: users().getL
 
 function doPost(e) {
   var b; try { b = JSON.parse(e.postData.contents); } catch (x) { return out({ error: 'bad' }); }
-  var W = { saveMonth: 1, changePassword: 1, adminSaveUser: 1 }, lock = null;
+  var W = { adminAddPay: 1, adminDelPay: 1, saveMonth: 1, changePassword: 1, adminSaveUser: 1 }, lock = null;
   if (W[b.action]) { lock = LockService.getScriptLock(); lock.waitLock(20000); }
   try {
     if (b.action === 'login') return out(login(b));
     var me = auth(b.token);
     if (!me) return out({ error: 'auth' });
     switch (b.action) {
-      case 'myMonths': return out({ data: myMonths(me.phone) });
+      case 'myMonths': return out({ data: myMonths(me.phone), pays: myPays(me.phone) });
       case 'saveMonth': return out(saveMonth(me, b));
       case 'changePassword': return out(changePassword(me, b));
       case 'adminMonth': return admin(me) || out(adminMonth(b.month));
       case 'adminUsers': return admin(me) || out({ users: listUsers() });
+      case 'adminAddPay': return admin(me) || out(adminAddPay(b));
+      case 'adminDelPay': return admin(me) || out(adminDelPay(b));
       case 'adminSaveUser': return admin(me) || out(adminSaveUser(b));
-      case 'adminEmployeeMonths': return admin(me) || out({ data: myMonths(normPhone(b.phone)) });
+      case 'adminEmployeeMonths': return admin(me) || out({ data: myMonths(normPhone(b.phone)), pays: myPays(normPhone(b.phone)) });
     }
     return out({ error: 'bad action' });
   } finally { if (lock) lock.releaseLock(); }
@@ -105,6 +110,29 @@ function myMonths(phone) {
     (res[ms(r[1])] = res[ms(r[1])] || []).push({ p: r[2], w: r[3], a: Number(r[4]) || 0 });
   });
   return res;
+}
+function allPays() {
+  var s = paysSheet(), n = s.getLastRow();
+  return n < 2 ? [] : s.getRange(2, 1, n - 1, 6).getValues().map(function (r) { return { id: String(r[0]), phone: String(r[1]), month: ms(r[2]), a: Number(r[3]) || 0, d: String(r[4]), n: String(r[5]) }; });
+}
+function myPays(phone) {
+  var res = {};
+  allPays().forEach(function (p) { if (p.phone === phone) (res[p.month] = res[p.month] || []).push({ a: p.a, d: p.d, n: p.n }); });
+  return res;
+}
+function adminAddPay(b) {
+  var phone = normPhone(b.phone), month = String(b.month || ''), a = Number(String(b.amount).replace(',', '.'));
+  if (!findUser(phone) || !/^\d{4}-\d{2}$/.test(month) || !(a > 0)) return { error: 'bad' };
+  var s = paysSheet(), r = s.getLastRow() + 1;
+  s.getRange(r, 1, 1, 6).setNumberFormat('@').setValues([[Utilities.getUuid(), phone, month, a, String(b.date || '').slice(0, 10), String(b.note || '').slice(0, 200)]]);
+  return { ok: true };
+}
+function adminDelPay(b) {
+  var s = paysSheet(), n = s.getLastRow();
+  if (n < 2) return { ok: true };
+  var v = s.getRange(2, 1, n - 1, 1).getValues();
+  for (var i = 0; i < v.length; i++) if (String(v[i][0]) === String(b.id)) { s.deleteRow(i + 2); break; }
+  return { ok: true };
 }
 function curMonth() { return Utilities.formatDate(new Date(), 'Europe/Moscow', 'yyyy-MM'); }
 function saveMonth(me, b) {
@@ -152,6 +180,11 @@ function adminMonth(month) {
     var p = String(r[0]); if (!by[p]) return;
     var a = Number(r[4]) || 0;
     by[p].rows.push({ p: r[2], w: r[3], a: a }); by[p].total += a;
+  });
+  Object.keys(by).forEach(function (k) { by[k].pays = []; by[k].paid = 0; });
+  allPays().forEach(function (p) {
+    if (p.month !== month || !by[p.phone]) return;
+    by[p.phone].pays.push({ id: p.id, a: p.a, d: p.d, n: p.n }); by[p.phone].paid += p.a;
   });
   return { month: month, employees: Object.keys(by).map(function (k) { return by[k]; }) };
 }

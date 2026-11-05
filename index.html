@@ -43,7 +43,8 @@ details{border-top:1px solid var(--bd);padding:8px 0}summary{cursor:pointer;disp
     <div class="card"><h2 id="mt"></h2>
       <table><thead><tr><th>Проект</th><th>Вид работы</th><th class="n">Сумма, ₽</th><th class="d"></th></tr></thead><tbody id="tb"></tbody></table>
       <div class="row" style="margin-top:10px"><button class="g" id="add" style="flex:none">+ Строка</button></div>
-      <div class="tot"><span>Итого за месяц</span><span id="sum">0 ₽</span></div>
+      <div class="tot"><span>Начислено за месяц</span><span id="sum">0 ₽</span></div>
+      <div id="pay"></div>
       <div class="mu" id="st" style="margin-top:6px"></div>
     </div>
   </div>
@@ -68,7 +69,7 @@ const MN = ['Январь','Февраль','Март','Апрель','Май','
 const rub = n => (Math.round(n * 100) / 100).toLocaleString('ru-RU') + ' ₽';
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const mlabel = m => MN[+m.slice(5) - 1] + ' ' + m.slice(0, 4);
-let S = null, data = {}, cur = '', timer = null, target = null; // target: телефон сотрудника, которого правит админ (null = сам)
+let S = null, data = {}, pays = {}, cur = '', timer = null, target = null; // target: телефон сотрудника, которого правит админ (null = сам)
 
 async function api(action, body = {}) {
   if (!API) throw new Error('Не указан адрес сервера (const API в index.html)');
@@ -121,12 +122,12 @@ const cs = (k, v) => { try { sessionStorage.setItem('c' + k, JSON.stringify(v));
 async function loadMine() {
   const key = 'm' + (target || S.phone);
   if (!cur) cur = nowM();
-  const c = ck(key); if (c) { data = c; drawTabs(); drawMonth(); }
+  const c = ck(key); if (c) { data = c.data || {}; pays = c.pays || {}; drawTabs(); drawMonth(); }
   const j = target ? await api('adminEmployeeMonths', { phone: target }) : await api('myMonths');
   if (timer) return;
   await queue;
   if (timer) return;
-  data = j.data || {}; cs(key, data); drawTabs(); drawMonth();
+  data = j.data || {}; pays = j.pays || {}; cs(key, { data, pays }); drawTabs(); drawMonth();
 }
 function drawTabs() {
   $('mtabs').innerHTML = monthList().map(m => `<button data-m="${m}" class="${m === cur ? 'on' : ''}">${mlabel(m)}</button>`).join('');
@@ -147,14 +148,20 @@ function drawMonth() {
   $('add').disabled = lk; $('st').textContent = lk ? 'Этот месяц закрыт для правок' : ''; total();
 }
 const num = v => Number(String(v).replace(/\s/g, '').replace(',', '.')) || 0;
-function total() { $('sum').textContent = rub((data[cur] || []).reduce((s, r) => s + num(r.a), 0)); }
+function total() {
+  const t = (data[cur] || []).reduce((s, r) => s + num(r.a), 0), ps = pays[cur] || [], paid = ps.reduce((s, p) => s + p.a, 0);
+  $('sum').textContent = rub(t);
+  $('pay').innerHTML = `<div class="tot" style="font-size:16px"><span>Выплачено</span><span class="ok">${rub(paid)}</span></div>
+    <div class="tot" style="font-size:16px"><span>Осталось выплатить</span><span>${rub(t - paid)}</span></div>` +
+    (ps.length ? `<div class="mu" style="margin-top:8px">${ps.map(p => `${esc(p.d)} — ${rub(p.a)}${p.n ? ' · ' + esc(p.n) : ''}`).join('<br>')}</div>` : '');
+}
 $('add').onclick = () => { data[cur].push({ p: '', w: '', a: '' }); drawMonth(); dirty(); };
 function dirty() { $('st').textContent = 'Сохранение…'; $('st').className = 'mu'; clearTimeout(timer); timer = setTimeout(flush, 1200); }
 let queue = Promise.resolve();
 function flush() {
   if (!timer) return queue; clearTimeout(timer); timer = null;
   const month = cur, phone = target || undefined, rows = data[month].map(r => ({ p: r.p, w: r.w, a: num(r.a) }));
-  cs('m' + (target || S.phone), data);
+  cs('m' + (target || S.phone), { data, pays });
   queue = queue.then(() => doSave(month, phone, rows), () => doSave(month, phone, rows));
   return queue;
 }
@@ -176,11 +183,23 @@ async function loadSum() {
 }
 function drawSum(j) {
   const sel = $('am');
-  const e = (j.employees || []).filter(x => x.active || x.total);
-  $('gt').textContent = rub(e.reduce((s, x) => s + x.total, 0));
-  $('alist').innerHTML = e.length ? e.map(x => `<details><summary><b>${esc(x.name)}</b><span><b>${rub(x.total)}</b></span></summary>
+  const opened = new Set([...$('alist').querySelectorAll('details[open]')].map(d => d.dataset.ph));
+  const e = (j.employees || []).filter(x => x.active || x.total).map(x => ({ ...x, paid: x.paid || 0, pays: x.pays || [] }));
+  const gt = e.reduce((s, x) => s + x.total, 0), gp = e.reduce((s, x) => s + x.paid, 0);
+  $('gt').innerHTML = `${rub(gt)} <span class="mu">· выплачено ${rub(gp)} · осталось ${rub(gt - gp)}</span>`;
+  $('alist').innerHTML = e.length ? e.map(x => `<details data-ph="${x.phone}"${opened.has(x.phone) ? ' open' : ''}><summary><b>${esc(x.name)}</b><span><b>${rub(x.total)}</b> <span class="mu">· выплачено ${rub(x.paid)} · осталось ${rub(x.total - x.paid)}</span></span></summary>
     <table style="margin-top:6px">${x.rows.map(r => `<tr><td>${esc(r.p)}</td><td>${esc(r.w)}</td><td class="n" style="text-align:right">${rub(r.a)}</td></tr>`).join('') || '<tr><td class="mu">Записей нет</td></tr>'}</table>
+    <div class="mu" style="margin-top:8px">Выплаты:</div>
+    ${x.pays.map(p => `<div class="row" style="align-items:center;padding:2px 0"><span>${esc(p.d)} — <b>${rub(p.a)}</b>${p.n ? ' · ' + esc(p.n) : ''}</span><button class="x" style="flex:none;min-width:0" data-delpay="${esc(p.id)}">✕</button></div>`).join('')}
+    <div class="row" style="margin-top:6px"><input data-pa="${x.phone}" inputmode="decimal" placeholder="Сумма выплаты"><input data-pd="${x.phone}" type="date" value="${new Date().toISOString().slice(0, 10)}"><input data-pn="${x.phone}" placeholder="Комментарий"><button data-addpay="${x.phone}">Выплатить</button></div>
     <button class="g" data-edit="${x.phone}" style="margin-top:8px">Править таблицу сотрудника</button></details>`).join('') : '<span class="mu">Сотрудников пока нет</span>';
+  $('alist').querySelectorAll('[data-addpay]').forEach(b => b.onclick = async () => {
+    const ph = b.dataset.addpay, q = k => $('alist').querySelector(`[data-${k}="${ph}"]`);
+    const j = await api('adminAddPay', { phone: ph, month: sel.value, amount: q('pa').value, date: q('pd').value, note: q('pn').value });
+    if (j.error) { $('err').textContent = 'Укажите сумму выплаты больше нуля'; return; }
+    $('err').textContent = ''; loadSum();
+  });
+  $('alist').querySelectorAll('[data-delpay]').forEach(b => b.onclick = async () => { await api('adminDelPay', { id: b.dataset.delpay }); loadSum(); });
   $('alist').querySelectorAll('[data-edit]').forEach(b => b.onclick = () => { target = b.dataset.edit; cur = sel.value; view2(); });
 }
 function view2() { document.querySelectorAll('#atabs button').forEach(b => b.classList.remove('on')); $('vEmp').classList.remove('hide'); $('vSum').classList.add('hide'); $('vUsr').classList.add('hide'); loadMine(); }

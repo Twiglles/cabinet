@@ -1,42 +1,54 @@
 <!doctype html>
 <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Личный кабинет</title>
+<title>Моя ЗП</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#f5f6f8;--card:#fff;--tx:#1d2330;--mu:#6b7385;--ac:#2f6bff;--bd:#e1e4ea;--ok:#1a9d5c;--er:#d33}
-@media(prefers-color-scheme:dark){:root{--bg:#14171e;--card:#1c212b;--tx:#e8ebf2;--mu:#8e97ab;--bd:#2c3340}}
-*{box-sizing:border-box}body{margin:0;font:16px/1.4 system-ui,sans-serif;background:var(--bg);color:var(--tx)}
-.wrap{max-width:900px;margin:0 auto;padding:16px}
-.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:16px}
-h1{font-size:20px;margin:0}h2{font-size:17px;margin:0 0 12px}
-input,select{font:inherit;color:inherit;background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:9px 10px;width:100%}
-button{font:inherit;border:0;border-radius:8px;padding:9px 14px;background:var(--ac);color:#fff;cursor:pointer}
-button.g{background:transparent;color:var(--ac);border:1px solid var(--bd)}button.x{background:transparent;color:var(--er);padding:6px 10px}
-.top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap}
-.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:12px}
-.tabs button{background:var(--card);color:var(--tx);border:1px solid var(--bd);white-space:nowrap}.tabs button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
-table{width:100%;border-collapse:collapse}th{text-align:left;color:var(--mu);font-weight:500;font-size:13px;padding:4px}td{padding:4px}
+:root{--bg:rgb(15,15,15);--card:rgb(39,39,39);--card2:rgb(24,24,24);--tx:#F5F3F0;--mu:rgba(245,243,240,.78);--ac:rgb(154,31,31);--ach:rgb(178,42,42);--bd:rgba(245,243,240,.14);--ok:#7bc47f;--er:#ff9a8a}
+*{box-sizing:border-box}html{color-scheme:dark}
+body{margin:0;background:var(--bg);color:var(--tx);font:400 16px/1.5 Montserrat,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:720px;margin:0 auto;padding:20px 16px 40px}
+.brand{font:400 18px 'Archivo Black',sans-serif;letter-spacing:.01em}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:20px 18px;margin-bottom:16px}
+h1{font:800 clamp(28px,8vw,40px)/1.05 Montserrat,sans-serif;margin:0}
+h1 mark{background:var(--ac);color:var(--tx);padding:0 .14em;border-radius:3px}
+h2{font:700 12px Montserrat,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--ach);margin:0 0 12px}
+input,select{width:100%;font:500 16px Montserrat,sans-serif;min-height:48px;padding:10px 12px;border:1px solid var(--bd);border-radius:4px;background:var(--card2);color:var(--tx)}
+input::placeholder{color:rgba(245,243,240,.35)}
+input:focus,select:focus{outline:none;border-color:var(--ach);box-shadow:0 0 0 1px var(--ach)}
+select{appearance:none;padding-right:36px;background-image:linear-gradient(45deg,transparent 50%,var(--tx) 50%),linear-gradient(135deg,var(--tx) 50%,transparent 50%);background-position:calc(100% - 20px) 50%,calc(100% - 15px) 50%;background-size:5px 5px;background-repeat:no-repeat}
+button{font:700 15px Montserrat,sans-serif;padding:11px 16px;border-radius:4px;border:1px solid var(--ac);background:var(--ac);color:#fff;cursor:pointer;transition:background .15s,border-color .15s}
+button:hover{background:var(--ach);border-color:var(--ach)}
+button.g{background:transparent;color:var(--tx);border-color:var(--bd)}button.g:hover{border-color:var(--ach);background:transparent}
+button.x{background:transparent;border:0;color:var(--er);padding:6px 10px}
+button:disabled{opacity:.5;cursor:default}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:22px;flex-wrap:wrap}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px;margin-bottom:8px;scrollbar-width:thin}
+.tabs button{flex:0 0 auto;background:transparent;color:var(--tx);border:1px solid var(--bd);padding:9px 16px;font-size:14px;white-space:nowrap}
+.tabs button.on{background:var(--ac);border-color:var(--ac);color:#fff}
+table{width:100%;border-collapse:collapse}th{text-align:left;font:700 11px Montserrat,system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--ach);padding:4px}td{padding:4px}
 td.n,th.n{width:130px}td.d{width:44px}
-.tot{display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:18px;font-weight:600}
-.mu{color:var(--mu);font-size:14px}.er{color:var(--er)}.ok{color:var(--ok)}
+.tot{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid var(--bd);font:800 20px Montserrat,system-ui,sans-serif}
+.mu{color:var(--mu);font-size:13px}.er{color:var(--er)}.ok{color:var(--ok)}
 .row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1;min-width:140px}
-details{border-top:1px solid var(--bd);padding:8px 0}summary{cursor:pointer;display:flex;justify-content:space-between;gap:8px}
+details{border-top:1px solid var(--bd);padding:12px 0}summary{cursor:pointer;display:flex;justify-content:space-between;gap:8px;font-weight:600}
 .hide{display:none}
-@media(max-width:560px){td.n{width:90px}}
+@media(max-width:560px){td.n{width:96px}}
 </style></head><body><div class="wrap">
 
 <div id="login" class="card hide" style="max-width:380px;margin:60px auto">
-  <h1>Вход в кабинет</h1><p class="mu">Номер телефона и пароль выдаёт администратор.</p>
+  <div class="brand" style="margin-bottom:14px">TWIGLLES</div><h1>Моя <mark>ЗП</mark></h1><br><p class="mu">Номер телефона и пароль выдаёт администратор.</p>
   <div class="row" style="flex-direction:column"><input id="ph" type="tel" placeholder="Телефон: +7 900 000-00-00" autocomplete="username">
   <input id="pw" type="password" placeholder="Пароль" autocomplete="current-password"><button id="go">Войти</button></div>
   <p id="lerr" class="er"></p>
 </div>
 
 <div id="app" class="hide">
-  <div class="top"><div><h1 id="who"></h1><div class="mu" id="role"></div></div>
+  <div class="top"><div><div class="brand">TWIGLLES</div><div id="who" style="font-weight:800;font-size:22px;margin-top:4px"></div><div class="mu" id="role"></div></div>
   <div class="row" style="flex:none"><button class="g" id="pwbtn">Сменить пароль</button><button class="g" id="out">Выйти</button></div></div>
   <div id="pwbox" class="card hide"><h2>Смена пароля</h2><div class="row"><input id="op" type="password" placeholder="Текущий пароль"><input id="np" type="password" placeholder="Новый (от 6 знаков)"><button id="pws">Сохранить</button></div><p id="pwm"></p></div>
   <div id="err" class="er"></div>
-  <div id="atabs" class="tabs hide"><button data-v="sum" class="on">Все зарплаты</button><button data-v="usr">Сотрудники</button><button data-v="me">Мой кабинет</button></div>
+  <div id="atabs" class="tabs hide"><button data-v="sum" class="on">Все зарплаты</button><button data-v="usr">Сотрудники</button><button data-v="me">Моя ЗП</button></div>
 
   <div id="vEmp">
     <div id="mtabs" class="tabs"></div>

@@ -35,7 +35,7 @@ td.n,th.n{width:130px}td.d{width:44px}
 .row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1;min-width:140px}
 details{border-top:1px solid var(--bd);padding:12px 0}summary{cursor:pointer;display:flex;justify-content:space-between;gap:4px 8px;font-weight:600}
 .hide{display:none}
-#atabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;overflow:visible;margin-bottom:16px}#atabs button{padding:10px 4px;font-size:13px;white-space:normal;line-height:1.2}
+#atabs.hide{display:none}#atabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;overflow:visible;margin-bottom:16px}#atabs button{padding:10px 4px;font-size:13px;white-space:normal;line-height:1.2}
 .mnav{display:grid;grid-template-columns:52px 1fr 52px;gap:8px;margin-bottom:16px}
 .mnav button{padding:0;min-height:48px;font-size:26px;line-height:1}.mnav select{font-weight:700;font-size:17px;text-align:center;text-align-last:center}
 .big{font:800 clamp(32px,9vw,44px)/1.05 Montserrat,system-ui,sans-serif;margin:2px 0 14px}
@@ -54,7 +54,17 @@ td.p input,td.w input,td.n input{min-width:0}
   #tb td.n input{text-align:right}
   .tot{font-size:18px}
 }
-</style></head><body><div class="wrap">
+.bar{position:sticky;top:0;z-index:10;background:var(--card2);border-bottom:1px solid var(--bd)}
+.bar .in{max-width:720px;margin:0 auto;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.bar .brand{border:0;margin:0;padding:0}
+.menu{position:relative}.menu>button{padding:9px 14px;font-size:14px}
+.pop{position:absolute;right:0;top:calc(100% + 8px);min-width:230px;background:var(--card2);border:1px solid var(--bd);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;box-shadow:0 10px 28px rgba(0,0,0,.14)}
+.pop.hide{display:none}.pop .who{margin-bottom:4px;display:flex;flex-direction:column}.pop .who b{font-size:17px}
+</style></head><body>
+<header class="bar hide" id="bar"><div class="in"><span class="brand">Twiglles</span>
+<div class="menu"><button class="g" id="mbtn" aria-haspopup="true">Меню ▾</button>
+<div id="mpop" class="pop hide"><div class="who"><b id="who"></b><span class="mu" id="role"></span></div><button class="g" id="pwbtn">Сменить пароль</button><button class="g" id="out">Выйти</button></div></div></div></header>
+<div class="wrap">
 
 <div id="login" class="card hide" style="max-width:380px;margin:60px auto">
   <div class="brand">Twiglles</div><h1>Моя <mark>оплата</mark></h1><br><p class="mu">Номер телефона и пароль выдаёт администратор.</p>
@@ -64,8 +74,7 @@ td.p input,td.w input,td.n input{min-width:0}
 </div>
 
 <div id="app" class="hide">
-  <div class="top"><div><div class="brand">Twiglles</div><div id="who" style="font-weight:800;font-size:22px;margin-top:4px"></div><div class="mu" id="role"></div></div>
-  <div class="row" style="flex:none"><button class="g" id="pwbtn">Сменить пароль</button><button class="g" id="out">Выйти</button></div></div>
+  <h1 id="ttl" style="margin-bottom:18px"></h1>
   <div id="pwbox" class="card hide"><h2>Смена пароля</h2><div class="row"><input id="op" type="password" placeholder="Текущий пароль"><input id="np" type="password" placeholder="Новый (от 6 знаков)"><button id="pws">Сохранить</button></div><p id="pwm"></p></div>
   <div id="err" class="er"></div>
   <div id="atabs" class="tabs hide"><button data-v="sum" class="on">Все зарплаты</button><button data-v="usr">Сотрудники</button><button data-v="me">Моя оплата</button></div>
@@ -114,10 +123,11 @@ async function api(action, body = {}) {
 function save() { try { sessionStorage.setItem('s', JSON.stringify(S)); } catch (e) {} }
 function logout() { S = null; try { sessionStorage.clear(); } catch (e) {} show(); }
 function show() {
-  $('login').classList.toggle('hide', !!S); $('app').classList.toggle('hide', !S);
+  $('login').classList.toggle('hide', !!S); $('bar').classList.toggle('hide', !S); $('app').classList.toggle('hide', !S);
   if (!S) return;
   $('who').textContent = S.name; $('role').textContent = S.role === 'admin' ? 'Администратор' : 'Сотрудник';
   $('atabs').classList.toggle('hide', S.role !== 'admin');
+  $('ttl').innerHTML = S.role === 'admin' ? '<mark>Зарплаты</mark>' : 'Моя <mark>оплата</mark>';
   view(S.role === 'admin' ? 'sum' : 'me');
 }
 $('go').onclick = async () => {
@@ -130,7 +140,9 @@ $('go').onclick = async () => {
 };
 $('pw').onkeydown = e => { if (e.key === 'Enter') $('go').click(); };
 $('out').onclick = logout;
-$('pwbtn').onclick = () => $('pwbox').classList.toggle('hide');
+$('pwbtn').onclick = () => { $('mpop').classList.add('hide'); $('pwbox').classList.toggle('hide'); };
+$('mbtn').onclick = e => { e.stopPropagation(); $('mpop').classList.toggle('hide'); };
+document.addEventListener('click', e => { if (!$('mpop').contains(e.target)) $('mpop').classList.add('hide'); });
 $('pws').onclick = async () => {
   const j = await api('changePassword', { oldPassword: $('op').value, newPassword: $('np').value });
   $('pwm').textContent = j.ok ? 'Пароль изменён' : j.error === 'short' ? 'Новый пароль слишком короткий' : 'Текущий пароль неверный';

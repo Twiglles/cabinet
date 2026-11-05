@@ -113,7 +113,6 @@ function saveMonth(me, b) {
   if (!/^\d{4}-\d{2}$/.test(month)) return { error: 'bad month' };
   if (me.role !== 'admin' && !EDIT_PAST_MONTHS && month < curMonth()) return { error: 'past locked' };
   var s = rows(), n = s.getLastRow();
-  s.getRange(1, 1, s.getMaxRows(), 2).setNumberFormat('@');
   if (n > 1) {
     var v = s.getRange(2, 1, n - 1, 2).getValues();
     for (var i = v.length - 1; i >= 0; i--) if (String(v[i][0]) === phone && ms(v[i][1]) === month) s.deleteRow(i + 2);
@@ -126,7 +125,7 @@ function saveMonth(me, b) {
   });
   if (add.length) {
     var start = s.getLastRow() + 1;
-    s.getRange(start, 1, add.length, 1).setNumberFormat('@');
+    s.getRange(start, 1, add.length, 2).setNumberFormat('@');
     s.getRange(start, 1, add.length, 6).setValues(add);
   }
   return { saved: add.length };

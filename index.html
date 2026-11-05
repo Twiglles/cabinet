@@ -35,6 +35,7 @@ details{border-top:1px solid var(--bd);padding:8px 0}summary{cursor:pointer;disp
   <div class="top"><div><h1 id="who"></h1><div class="mu" id="role"></div></div>
   <div class="row" style="flex:none"><button class="g" id="pwbtn">Сменить пароль</button><button class="g" id="out">Выйти</button></div></div>
   <div id="pwbox" class="card hide"><h2>Смена пароля</h2><div class="row"><input id="op" type="password" placeholder="Текущий пароль"><input id="np" type="password" placeholder="Новый (от 6 знаков)"><button id="pws">Сохранить</button></div><p id="pwm"></p></div>
+  <div id="err" class="er"></div>
   <div id="atabs" class="tabs hide"><button data-v="sum" class="on">Все зарплаты</button><button data-v="usr">Сотрудники</button><button data-v="me">Мой кабинет</button></div>
 
   <div id="vEmp">
@@ -73,7 +74,7 @@ async function api(action, body = {}) {
   if (!API) throw new Error('Не указан адрес сервера (const API в index.html)');
   const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action, token: S && S.token, ...body }) });
   const j = await r.json();
-  if (j.error === 'auth') { logout(); throw new Error('Сессия истекла, войдите снова'); }
+  if (j.error === 'auth') { logout(); $('lerr').textContent = 'Сессия истекла, войдите снова'; throw new Error('Сессия истекла'); }
   return j;
 }
 function save() { try { sessionStorage.setItem('s', JSON.stringify(S)); } catch (e) {} }
@@ -103,6 +104,7 @@ $('pws').onclick = async () => {
 };
 document.querySelectorAll('#atabs button').forEach(b => b.onclick = () => view(b.dataset.v));
 function view(v) {
+  flush(); $('err').textContent = '';
   document.querySelectorAll('#atabs button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
   $('vEmp').classList.toggle('hide', v !== 'me'); $('vSum').classList.toggle('hide', v !== 'sum'); $('vUsr').classList.toggle('hide', v !== 'usr');
   if (v === 'me') { target = null; loadMine(); } else if (v === 'sum') loadSum(); else loadUsers();
@@ -121,6 +123,8 @@ async function loadMine() {
   if (!cur) cur = nowM();
   const c = ck(key); if (c) { data = c; drawTabs(); drawMonth(); }
   const j = target ? await api('adminEmployeeMonths', { phone: target }) : await api('myMonths');
+  if (timer) return;
+  await queue;
   if (timer) return;
   data = j.data || {}; cs(key, data); drawTabs(); drawMonth();
 }
@@ -146,14 +150,21 @@ const num = v => Number(String(v).replace(/\s/g, '').replace(',', '.')) || 0;
 function total() { $('sum').textContent = rub((data[cur] || []).reduce((s, r) => s + num(r.a), 0)); }
 $('add').onclick = () => { data[cur].push({ p: '', w: '', a: '' }); drawMonth(); dirty(); };
 function dirty() { $('st').textContent = 'Сохранение…'; $('st').className = 'mu'; clearTimeout(timer); timer = setTimeout(flush, 1200); }
-async function flush() {
-  if (!timer) return; clearTimeout(timer); timer = null;
+let queue = Promise.resolve();
+function flush() {
+  if (!timer) return queue; clearTimeout(timer); timer = null;
+  const month = cur, phone = target || undefined, rows = data[month].map(r => ({ p: r.p, w: r.w, a: num(r.a) }));
+  cs('m' + (target || S.phone), data);
+  queue = queue.then(() => doSave(month, phone, rows), () => doSave(month, phone, rows));
+  return queue;
+}
+async function doSave(month, phone, rows) {
   try {
-    cs('m' + (target || S.phone), data);
-    const j = await api('saveMonth', { month: cur, phone: target || undefined, rows: data[cur].map(r => ({ p: r.p, w: r.w, a: num(r.a) })) });
+    const j = await api('saveMonth', { month, phone, rows });
     $('st').textContent = j.error ? 'Не сохранено: ' + j.error : 'Сохранено ✓'; $('st').className = j.error ? 'er' : 'ok';
   } catch (e) { $('st').textContent = 'Не сохранено: ' + e.message; $('st').className = 'er'; }
 }
+addEventListener('unhandledrejection', e => { const m = e.reason && e.reason.message; if (m && m !== 'Сессия истекла') $('err').textContent = 'Ошибка: ' + m; });
 addEventListener('beforeunload', () => { if (timer) flush(); });
 
 async function loadSum() {

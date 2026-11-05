@@ -19,7 +19,7 @@ function rows() {
   s.getRange(1, 1, s.getMaxRows(), 2).setNumberFormat('@');
   return s;
 }
-function ms(v) { return v instanceof Date ? Utilities.formatDate(v, 'Europe/Moscow', 'yyyy-MM') : String(v); }
+function ms(v) { return v instanceof Date ? Utilities.formatDate(v, SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone(), 'yyyy-MM') : String(v); }
 
 function normPhone(p) {
   var d = String(p || '').replace(/\D/g, '');

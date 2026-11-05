@@ -14,7 +14,12 @@ function sh(name, head) {
 var USERS_H = ['phone', 'name', 'role', 'salt', 'hash', 'active'];
 var ROWS_H = ['phone', 'month', 'project', 'work', 'amount', 'updatedAt'];
 function users() { return sh('Сотрудники', USERS_H); }
-function rows() { return sh('Записи', ROWS_H); }
+function rows() {
+  var s = sh('Записи', ROWS_H);
+  s.getRange(1, 1, s.getMaxRows(), 2).setNumberFormat('@');
+  return s;
+}
+function ms(v) { return v instanceof Date ? Utilities.formatDate(v, 'Europe/Moscow', 'yyyy-MM') : String(v); }
 
 function normPhone(p) {
   var d = String(p || '').replace(/\D/g, '');
@@ -93,7 +98,7 @@ function myMonths(phone) {
   if (n < 2) return res;
   s.getRange(2, 1, n - 1, 5).getValues().forEach(function (r) {
     if (String(r[0]) !== phone) return;
-    (res[r[1]] = res[r[1]] || []).push({ p: r[2], w: r[3], a: Number(r[4]) || 0 });
+    (res[ms(r[1])] = res[ms(r[1])] || []).push({ p: r[2], w: r[3], a: Number(r[4]) || 0 });
   });
   return res;
 }
@@ -106,7 +111,7 @@ function saveMonth(me, b) {
   var s = rows(), n = s.getLastRow();
   if (n > 1) {
     var v = s.getRange(2, 1, n - 1, 2).getValues();
-    for (var i = v.length - 1; i >= 0; i--) if (String(v[i][0]) === phone && v[i][1] === month) s.deleteRow(i + 2);
+    for (var i = v.length - 1; i >= 0; i--) if (String(v[i][0]) === phone && ms(v[i][1]) === month) s.deleteRow(i + 2);
   }
   var now = Date.now(), add = [];
   (b.rows || []).slice(0, 200).forEach(function (r) {
@@ -138,7 +143,7 @@ function adminMonth(month) {
   us.forEach(function (u) { by[u.phone] = { phone: u.phone, name: u.name, active: u.active, rows: [], total: 0 }; });
   var s = rows(), n = s.getLastRow();
   if (n > 1) s.getRange(2, 1, n - 1, 5).getValues().forEach(function (r) {
-    if (r[1] !== month) return;
+    if (ms(r[1]) !== month) return;
     var p = String(r[0]); if (!by[p]) return;
     var a = Number(r[4]) || 0;
     by[p].rows.push({ p: r[2], w: r[3], a: a }); by[p].total += a;

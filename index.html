@@ -1,6 +1,8 @@
 <!doctype html>
 <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Моя оплата</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%239A1F1F%22/%3E%3Cpath d=%22M15 16h34v10H38.5v24h-13V26H15z%22 fill=%22%23F5F3F0%22/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAACMklEQVR4nOzbsUmkYRRA0W9lFsFs2QImNTDZNjYWrEMsQCxAzO1AMLYGYQQTFcEKDFRMDDTRAuZmOj8M5zTwkst70ZudzucDltkYEMRBEgdJHCRxkMRBEgdJHCRxkMRBEgdJHCRxkMRBEgdJHCRxkMRBEgdJHCRxkMRBEgdJHCRxkMRBEgdJHCRxkMRBEgdJHCRxkMRBEgdJHCRxkMRBEgdJHCRxkMRBEgdJHKTZmNT/87M/29uDZV7u7y9298Z0bA6SOEjiIImDJA6SOEjiIImDJA6SOEjiIImDJA6SOEjiIImDJA6SOEjiIImDJA6SOEjiIImDJA6SOEjiIE38K3t5ePR7a2t8t787O/8O9seqXB+fPN3cjO/28fY2JjVxHM+3d+MHbGxujhV6eXh4XFyNteOskMRBEgdJHCRxkMRBEgdJHCRxkMRBEgdJHCRxkMRBEgdJHCRxkMRBEgdJHCRxkMRBEgdJHCRxkMRBEgdJHCRxkMRBEgdJHCRxkMRBEgdJHCRxkMRBEgdJHCRxkMRBEgdJHCRxkMRBEgdJHCRxkMRBEgdJHCRxkMRBEgdJHCRxkMRBEgdJHCRxkMRBEgdJHCRxkGZjHb2/vj4uFmNVvsaNdfTrdD4fsIyzQhIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIH6RMAAP//CelvYQAAAAZJREFUAwC//SPvwHNdqQAAAABJRU5ErkJggg==">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -8,7 +10,7 @@
 *{box-sizing:border-box}html{color-scheme:light}
 body{margin:0;background:var(--bg);color:var(--tx);font:400 16px/1.5 Montserrat,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 .wrap{max-width:720px;margin:0 auto;padding:20px 16px 40px}
-.brand{font:400 18px 'Archivo Black',sans-serif;letter-spacing:.01em}
+.brand{font:400 22px 'Archivo Black',sans-serif;letter-spacing:.01em;color:var(--ac);padding-bottom:12px;margin-bottom:16px;border-bottom:1px solid var(--bd)}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:20px 18px;margin-bottom:16px}
 h1{font:800 clamp(28px,8vw,40px)/1.05 Montserrat,sans-serif;margin:0}
 h1 mark{background:var(--ac);color:#fff;padding:0 .14em;border-radius:3px}
@@ -37,14 +39,14 @@ details{border-top:1px solid var(--bd);padding:12px 0}summary{cursor:pointer;dis
 </style></head><body><div class="wrap">
 
 <div id="login" class="card hide" style="max-width:380px;margin:60px auto">
-  <div class="brand" style="margin-bottom:14px">TWIGLLES</div><h1>Моя <mark>оплата</mark></h1><br><p class="mu">Номер телефона и пароль выдаёт администратор.</p>
+  <div class="brand">Twiglles</div><h1>Моя <mark>оплата</mark></h1><br><p class="mu">Номер телефона и пароль выдаёт администратор.</p>
   <div class="row" style="flex-direction:column"><input id="ph" type="tel" placeholder="Телефон: +7 900 000-00-00" autocomplete="username">
   <input id="pw" type="password" placeholder="Пароль" autocomplete="current-password"><button id="go">Войти</button></div>
   <p id="lerr" class="er"></p>
 </div>
 
 <div id="app" class="hide">
-  <div class="top"><div><div class="brand">TWIGLLES</div><div id="who" style="font-weight:800;font-size:22px;margin-top:4px"></div><div class="mu" id="role"></div></div>
+  <div class="top"><div><div class="brand">Twiglles</div><div id="who" style="font-weight:800;font-size:22px;margin-top:4px"></div><div class="mu" id="role"></div></div>
   <div class="row" style="flex:none"><button class="g" id="pwbtn">Сменить пароль</button><button class="g" id="out">Выйти</button></div></div>
   <div id="pwbox" class="card hide"><h2>Смена пароля</h2><div class="row"><input id="op" type="password" placeholder="Текущий пароль"><input id="np" type="password" placeholder="Новый (от 6 знаков)"><button id="pws">Сохранить</button></div><p id="pwm"></p></div>
   <div id="err" class="er"></div>

@@ -35,8 +35,7 @@ td.n,th.n{width:130px}td.d{width:44px}
 .row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1;min-width:140px}
 details{border-top:1px solid var(--bd);padding:12px 0}summary{cursor:pointer;display:flex;justify-content:space-between;gap:4px 8px;font-weight:600}
 .hide{display:none}
-.bar{height:8px;border-radius:4px;background:#e4e4e1;overflow:hidden;margin:0 0 14px}.bar i{display:block;height:100%;background:var(--ok);border-radius:4px;transition:width .3s}
-.bar.sm{grid-column:1/-1;height:6px;margin:6px 0 4px}
+.prog{height:8px;border-radius:4px;background:#e4e4e1;overflow:hidden;margin:0 0 14px}.prog i{display:block;height:100%;background:var(--ok);border-radius:4px;transition:width .3s}
 .pl{margin-top:14px;padding-top:12px;border-top:1px solid var(--bd);font-size:14px}.pl>div{display:flex;justify-content:space-between;gap:10px;padding:3px 0}.pl span{color:var(--mu)}
 #ldm{display:none;font-size:15px;padding:8px 0}.ld #ldm{display:block}.ld #ldm~*{display:none}
 #atabs.hide{display:none}#atabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;overflow:visible;margin-bottom:16px}#atabs button{padding:10px 4px;font-size:13px;white-space:normal;line-height:1.2}
@@ -223,7 +222,7 @@ function drawMonth() {
 }
 const num = v => Number(String(v).replace(/\s/g, '').replace(',', '.')) || 0;
 const pct = (t, p) => t > 0 ? Math.min(100, Math.round(p / t * 100)) : 0;
-const bar = (t, p, sm) => `<div class="bar${sm ? ' sm' : ''}"><i style="width:${pct(t, p)}%"></i></div>`;
+const bar = (t, p) => `<div class="prog"><i style="width:${pct(t, p)}%"></i></div>`;
 function total() {
   const t = (data[cur] || []).reduce((s, r) => s + num(r.a), 0), ps = pays[cur] || [], paid = ps.reduce((s, p) => s + p.a, 0), done = t > 0 && paid >= t;
   $('pay').innerHTML = `<h2>Расчёт за месяц</h2><div class="big">${rub(t)}</div>${bar(t, paid)}

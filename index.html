@@ -77,7 +77,7 @@ async function api(action, body = {}) {
   return j;
 }
 function save() { try { sessionStorage.setItem('s', JSON.stringify(S)); } catch (e) {} }
-function logout() { S = null; try { sessionStorage.removeItem('s'); } catch (e) {} show(); }
+function logout() { S = null; try { sessionStorage.clear(); } catch (e) {} show(); }
 function show() {
   $('login').classList.toggle('hide', !!S); $('app').classList.toggle('hide', !S);
   if (!S) return;
@@ -114,9 +114,15 @@ function monthList() {
   return [...set].sort().reverse();
 }
 const nowM = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); };
+const ck = k => { try { return JSON.parse(sessionStorage.getItem('c' + k)); } catch (e) { return null; } };
+const cs = (k, v) => { try { sessionStorage.setItem('c' + k, JSON.stringify(v)); } catch (e) {} };
 async function loadMine() {
+  const key = 'm' + (target || S.phone);
+  if (!cur) cur = nowM();
+  const c = ck(key); if (c) { data = c; drawTabs(); drawMonth(); }
   const j = target ? await api('adminEmployeeMonths', { phone: target }) : await api('myMonths');
-  data = j.data || {}; if (!cur) cur = nowM(); drawTabs(); drawMonth();
+  if (timer) return;
+  data = j.data || {}; cs(key, data); drawTabs(); drawMonth();
 }
 function drawTabs() {
   $('mtabs').innerHTML = monthList().map(m => `<button data-m="${m}" class="${m === cur ? 'on' : ''}">${mlabel(m)}</button>`).join('');
@@ -143,6 +149,7 @@ function dirty() { $('st').textContent = 'Сохранение…'; $('st').clas
 async function flush() {
   if (!timer) return; clearTimeout(timer); timer = null;
   try {
+    cs('m' + (target || S.phone), data);
     const j = await api('saveMonth', { month: cur, phone: target || undefined, rows: data[cur].map(r => ({ p: r.p, w: r.w, a: num(r.a) })) });
     $('st').textContent = j.error ? 'Не сохранено: ' + j.error : 'Сохранено ✓'; $('st').className = j.error ? 'er' : 'ok';
   } catch (e) { $('st').textContent = 'Не сохранено: ' + e.message; $('st').className = 'er'; }
@@ -151,8 +158,13 @@ addEventListener('beforeunload', () => { if (timer) flush(); });
 
 async function loadSum() {
   const sel = $('am'); if (!sel.options.length) { sel.innerHTML = monthList().map(m => `<option value="${m}">${mlabel(m)}</option>`).join(''); sel.value = nowM(); sel.onchange = loadSum; }
-  $('alist').textContent = 'Загрузка…';
+  const key = 's' + sel.value, c = ck(key);
+  if (c) drawSum(c); else $('alist').textContent = 'Загрузка…';
   const j = await api('adminMonth', { month: sel.value });
+  cs(key, j); drawSum(j);
+}
+function drawSum(j) {
+  const sel = $('am');
   const e = (j.employees || []).filter(x => x.active || x.total);
   $('gt').textContent = rub(e.reduce((s, x) => s + x.total, 0));
   $('alist').innerHTML = e.length ? e.map(x => `<details><summary><b>${esc(x.name)}</b><span><b>${rub(x.total)}</b></span></summary>

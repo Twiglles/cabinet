@@ -14,11 +14,7 @@ function sh(name, head) {
 var USERS_H = ['phone', 'name', 'role', 'salt', 'hash', 'active'];
 var ROWS_H = ['phone', 'month', 'project', 'work', 'amount', 'updatedAt'];
 function users() { return sh('Сотрудники', USERS_H); }
-function rows() {
-  var s = sh('Записи', ROWS_H);
-  s.getRange(1, 1, s.getMaxRows(), 2).setNumberFormat('@');
-  return s;
-}
+function rows() { return sh('Записи', ROWS_H); }
 function ms(v) { return v instanceof Date ? Utilities.formatDate(v, SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone(), 'yyyy-MM') : String(v); }
 
 function normPhone(p) {
@@ -39,6 +35,7 @@ function findUser(phone) {
   return null;
 }
 function putUser(phone, name, role, pass) {
+  CacheService.getScriptCache().remove('u_' + phone);
   var salt = Utilities.getUuid(), h = hash(salt, pass), u = findUser(phone), s = users();
   if (u) s.getRange(u.row, 1, 1, 6).setValues([[phone, name || u.name, role || u.role, salt, h, true]]);
   else { s.appendRow([phone, name, role || 'user', salt, h, true]); s.getRange(s.getLastRow(), 1).setNumberFormat('@').setValue(phone); }
@@ -54,7 +51,8 @@ function doGet() { return out({ ok: true, app: 'kabinet', adminSet: users().getL
 
 function doPost(e) {
   var b; try { b = JSON.parse(e.postData.contents); } catch (x) { return out({ error: 'bad' }); }
-  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  var W = { saveMonth: 1, changePassword: 1, adminSaveUser: 1 }, lock = null;
+  if (W[b.action]) { lock = LockService.getScriptLock(); lock.waitLock(20000); }
   try {
     if (b.action === 'login') return out(login(b));
     var me = auth(b.token);
@@ -69,7 +67,7 @@ function doPost(e) {
       case 'adminEmployeeMonths': return admin(me) || out({ data: myMonths(normPhone(b.phone)) });
     }
     return out({ error: 'bad action' });
-  } finally { lock.releaseLock(); }
+  } finally { if (lock) lock.releaseLock(); }
 }
 function admin(me) { return me.role === 'admin' ? null : out({ error: 'forbidden' }); }
 
@@ -88,9 +86,15 @@ function login(b) {
 }
 function auth(t) {
   if (!t) return null;
-  var phone = CacheService.getScriptCache().get('t_' + t);
-  var u = phone && findUser(phone);
-  return u && u.active ? u : null;
+  var c = CacheService.getScriptCache(), phone = c.get('t_' + t);
+  if (!phone) return null;
+  var j = c.get('u_' + phone);
+  if (j) return JSON.parse(j);
+  var u = findUser(phone);
+  if (!u || !u.active) return null;
+  var m = { phone: u.phone, name: u.name, role: u.role };
+  c.put('u_' + phone, JSON.stringify(m), SESSION_SEC);
+  return m;
 }
 
 function myMonths(phone) {
@@ -109,6 +113,7 @@ function saveMonth(me, b) {
   if (!/^\d{4}-\d{2}$/.test(month)) return { error: 'bad month' };
   if (me.role !== 'admin' && !EDIT_PAST_MONTHS && month < curMonth()) return { error: 'past locked' };
   var s = rows(), n = s.getLastRow();
+  s.getRange(1, 1, s.getMaxRows(), 2).setNumberFormat('@');
   if (n > 1) {
     var v = s.getRange(2, 1, n - 1, 2).getValues();
     for (var i = v.length - 1; i >= 0; i--) if (String(v[i][0]) === phone && ms(v[i][1]) === month) s.deleteRow(i + 2);
@@ -128,7 +133,8 @@ function saveMonth(me, b) {
 }
 function changePassword(me, b) {
   if (!b.newPassword || String(b.newPassword).length < 6) return { error: 'short' };
-  if (hash(me.salt, String(b.oldPassword || '')) !== me.hash) return { error: 'wrong' };
+  var cu = findUser(me.phone);
+  if (hash(cu.salt, String(b.oldPassword || '')) !== cu.hash) return { error: 'wrong' };
   putUser(me.phone, me.name, me.role, String(b.newPassword));
   return { ok: true };
 }
@@ -157,6 +163,7 @@ function adminSaveUser(b) {
   if (b.active === false || b.active === true) {
     if (!u) return { error: 'nouser' };
     users().getRange(u.row, 6).setValue(b.active);
+    CacheService.getScriptCache().remove('u_' + phone);
     return { ok: true };
   }
   if (!u && (!b.password || String(b.password).length < 6)) return { error: 'short' };

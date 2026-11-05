@@ -35,6 +35,7 @@ td.n,th.n{width:130px}td.d{width:44px}
 .row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1;min-width:140px}
 details{border-top:1px solid var(--bd);padding:12px 0}summary{cursor:pointer;display:flex;justify-content:space-between;gap:4px 8px;font-weight:600}
 .hide{display:none}
+#ldm{display:none;font-size:15px;padding:8px 0}.ld #ldm{display:block}.ld #mt~*:not(#ldm){display:none}
 #atabs.hide{display:none}#atabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;overflow:visible;margin-bottom:16px}#atabs button{padding:10px 4px;font-size:13px;white-space:normal;line-height:1.2}
 h2.step{margin:0 0 8px}
 .mnav{display:grid;grid-template-columns:52px 1fr 52px;gap:8px;margin-bottom:16px}
@@ -83,7 +84,7 @@ td.p input,td.w input,td.n input{min-width:0}
   <div id="vEmp">
     <h2 class="step">1. Выберите месяц</h2>
     <div class="mnav"><button class="g" id="mprev" aria-label="Предыдущий месяц">‹</button><select id="msel" aria-label="Месяц"></select><button class="g" id="mnext" aria-label="Следующий месяц">›</button></div>
-    <div class="card"><h2 id="mt"></h2>
+    <div class="card"><h2 id="mt"></h2><div id="ldm" class="mu">Загружаю данные…</div>
       <table><thead><tr><th>Проект</th><th>Вид работы</th><th class="n">Сумма, ₽</th><th class="d"></th></tr></thead><tbody id="tb"></tbody></table>
       <div class="row" style="margin-top:10px"><button class="g" id="add" style="flex:none">+ Строка</button></div>
       <div class="tot"><span>Начислено за месяц</span><span id="sum">0 ₽</span></div>
@@ -171,11 +172,14 @@ async function loadMine() {
   const key = 'm' + (target || S.phone);
   if (!cur) cur = nowM();
   const c = ck(key); if (c) { data = c.data || {}; pays = c.pays || {}; drawTabs(); drawMonth(); }
-  const j = target ? await api('adminEmployeeMonths', { phone: target }) : await api('myMonths');
-  if (timer) return;
-  await queue;
-  if (timer) return;
-  data = j.data || {}; pays = j.pays || {}; cs(key, { data, pays }); drawTabs(); drawMonth();
+  else { data = {}; pays = {}; drawTabs(); $('mt').textContent = '2. Работы за ' + mlabel(cur).toLowerCase(); $('vEmp').classList.add('ld'); }
+  try {
+    const j = target ? await api('adminEmployeeMonths', { phone: target }) : await api('myMonths');
+    if (timer) return;
+    await queue;
+    if (timer) return;
+    data = j.data || {}; pays = j.pays || {}; cs(key, { data, pays }); drawTabs(); drawMonth();
+  } finally { $('vEmp').classList.remove('ld'); }
 }
 function drawTabs() {
   $('msel').innerHTML = monthList().map(m => `<option value="${m}">${mlabel(m)}</option>`).join('');
@@ -229,7 +233,7 @@ addEventListener('beforeunload', () => { if (timer) flush(); });
 async function loadSum() {
   const sel = $('am'); if (!sel.options.length) { sel.innerHTML = monthList().map(m => `<option value="${m}">${mlabel(m)}</option>`).join(''); sel.value = nowM(); sel.onchange = loadSum; }
   const key = 's' + sel.value, c = ck(key);
-  if (c) drawSum(c); else $('alist').textContent = 'Загрузка…';
+  if (c) drawSum(c); else $('alist').innerHTML = '<span class="mu">Загружаю данные…</span>';
   const j = await api('adminMonth', { month: sel.value });
   cs(key, j); drawSum(j);
 }
@@ -256,6 +260,7 @@ function drawSum(j) {
 }
 function view2() { document.querySelectorAll('#atabs button').forEach(b => b.classList.remove('on')); $('vEmp').classList.remove('hide'); $('vSum').classList.add('hide'); $('vUsr').classList.add('hide'); loadMine(); }
 async function loadUsers() {
+  $('ulist').innerHTML = '<span class="mu">Загружаю данные…</span>';
   const j = await api('adminUsers');
   $('ulist').innerHTML = (j.users || []).map(u => `<div class="row" style="align-items:center;border-top:1px solid var(--bd);padding:6px 0">
     <div><b>${esc(u.name)}</b> <span class="mu">+${esc(u.phone)}${u.role === 'admin' ? ' · админ' : ''}</span></div>

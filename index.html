@@ -28,7 +28,7 @@ button:disabled{opacity:.5;cursor:default}
 .tabs{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px;margin-bottom:8px;scrollbar-width:thin}
 .tabs button{flex:0 0 auto;background:transparent;color:var(--tx);border:1px solid var(--bd);padding:9px 16px;font-size:14px;white-space:nowrap}
 .tabs button.on{background:var(--ac);border-color:var(--ac);color:#fff}
-table{width:100%;border-collapse:collapse}th{text-align:left;font:700 11px Montserrat,system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--ach);padding:4px}td{padding:4px}
+table{width:calc(100% + 8px);margin:0 -4px;border-collapse:collapse}th{text-align:left;font:700 11px Montserrat,system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--ach);padding:4px}td{padding:4px}
 td.n,th.n{width:130px}td.d{width:44px}
 .tot{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid var(--bd);font:800 20px Montserrat,system-ui,sans-serif}
 .mu{color:var(--mu);font-size:13px}.er{color:var(--er)}.ok{color:var(--ok)}
@@ -36,6 +36,7 @@ td.n,th.n{width:130px}td.d{width:44px}
 details{border-top:1px solid var(--bd);padding:12px 0}summary{cursor:pointer;display:flex;justify-content:space-between;gap:4px 8px;font-weight:600}
 .hide{display:none}
 #atabs.hide{display:none}#atabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;overflow:visible;margin-bottom:16px}#atabs button{padding:10px 4px;font-size:13px;white-space:normal;line-height:1.2}
+h2.step{margin:0 0 8px}
 .mnav{display:grid;grid-template-columns:52px 1fr 52px;gap:8px;margin-bottom:16px}
 .mnav button{padding:0;min-height:48px;font-size:26px;line-height:1}.mnav select{font-weight:700;font-size:17px;text-align:center;text-align-last:center}
 .big{font:800 clamp(32px,9vw,44px)/1.05 Montserrat,system-ui,sans-serif;margin:2px 0 14px}
@@ -47,7 +48,7 @@ td.p input,td.w input,td.n input{min-width:0}
   .wrap{padding:16px 14px 32px}.card{padding:16px 14px}
   .top .row{width:100%}.top .row button{padding:10px 8px;font-size:14px}
   .row>*{min-width:100%}.top .row>*{min-width:0}
-  thead{display:none}
+  table{width:100%;margin:0}thead{display:none}
   #tb tr{display:grid;grid-template-columns:1fr 112px 44px;gap:8px;padding:12px 0;border-top:1px solid var(--bd)}
   #tb tr:first-child{border-top:0;padding-top:0}
   #tb td{padding:0;width:auto}#tb td.p{grid-column:1/-1}#tb td.d{display:flex;align-items:center;justify-content:center}
@@ -80,6 +81,7 @@ td.p input,td.w input,td.n input{min-width:0}
   <div id="atabs" class="tabs hide"><button data-v="sum" class="on">Все зарплаты</button><button data-v="usr">Сотрудники</button><button data-v="me">Моя оплата</button></div>
 
   <div id="vEmp">
+    <h2 class="step">1. Выберите месяц</h2>
     <div class="mnav"><button class="g" id="mprev" aria-label="Предыдущий месяц">‹</button><select id="msel" aria-label="Месяц"></select><button class="g" id="mnext" aria-label="Следующий месяц">›</button></div>
     <div class="card"><h2 id="mt"></h2>
       <table><thead><tr><th>Проект</th><th>Вид работы</th><th class="n">Сумма, ₽</th><th class="d"></th></tr></thead><tbody id="tb"></tbody></table>
@@ -91,6 +93,7 @@ td.p input,td.w input,td.n input{min-width:0}
   </div>
 
   <div id="vSum" class="hide">
+    <h2 class="step">Выберите месяц</h2>
     <div class="mnav"><button class="g" id="aprev" aria-label="Предыдущий месяц">‹</button><select id="am" aria-label="Месяц"></select><button class="g" id="anext" aria-label="Следующий месяц">›</button></div>
     <div class="card" id="gtc"><h2>Всего за месяц</h2><div id="gt"></div></div>
     <div class="card" id="alist"></div>
@@ -184,7 +187,7 @@ $('mprev').onclick = () => step($('msel'), 1); $('mnext').onclick = () => step($
 $('aprev').onclick = () => step($('am'), 1); $('anext').onclick = () => step($('am'), -1);
 const locked = () => S.role !== 'admin' && !S.editPast && cur < nowM();
 function drawMonth() {
-  $('mt').textContent = mlabel(cur) + (target ? ' — ' + target : '');
+  $('mt').textContent = '2. Работы за ' + mlabel(cur).toLowerCase() + (target ? ' — ' + target : '');
   const rows = data[cur] && data[cur].length ? data[cur] : [{ p: '', w: '', a: '' }];
   data[cur] = rows;
   $('tb').innerHTML = rows.map((r, i) => `<tr><td class="p"><input data-i="${i}" data-k="p" value="${esc(r.p)}" placeholder="Название проекта"></td>

@@ -35,6 +35,7 @@ td.n,th.n{width:130px}td.d{width:44px}
 .row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1;min-width:140px}
 details{border-top:1px solid var(--bd);padding:12px 0}summary{cursor:pointer;display:flex;justify-content:space-between;gap:4px 8px;font-weight:600}
 .hide{display:none}
+.ur{flex-wrap:wrap}.ur .rs{flex:1 0 100%;min-height:42px;font-size:14px;padding:6px 36px 6px 10px}.ur .rl{flex:1 0 100%}
 .imp{background:#fbeaea;border:1px solid rgba(140,14,14,.25);border-radius:12px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;font-size:14px}.imp.hide{display:none}.imp button{padding:8px 12px;font-size:13px}
 .spin{display:inline-block;width:14px;height:14px;margin-right:10px;vertical-align:-2px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
 .rem{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--mu);cursor:pointer}.rem input{width:20px;min-height:20px;height:20px;padding:0;accent-color:var(--ac);flex:none}
@@ -133,7 +134,7 @@ details[open] .chev::after{transform:rotate(-135deg);top:9px}
 
   <div id="vUsr" class="hide">
     <div class="card"><h2>Добавить / обновить сотрудника</h2>
-      <div class="row"><input id="un" placeholder="Имя"><input id="up" type="tel" placeholder="Телефон"><input id="upw" placeholder="Пароль (от 6 знаков)"><button id="us">Сохранить</button></div>
+      <div class="row"><input id="un" placeholder="Имя"><input id="up" type="tel" placeholder="Телефон"><input id="upw" placeholder="Пароль (от 6 знаков)"><select id="ur" aria-label="Роль"><option value="user">Сотрудник</option><option value="manager">Менеджер продаж</option><option value="head">Руководитель отдела продаж</option><option value="admin">Администратор</option></select><button id="us">Сохранить</button></div>
       <p class="mu">Чтобы сбросить пароль, введите тот же телефон и новый пароль.</p><p id="um"></p></div>
     <div class="card"><h2>Список сотрудников</h2><div id="ulist"></div></div>
   </div>
@@ -322,8 +323,11 @@ function ask(text) {
 async function loadUsers() {
   $('ulist').innerHTML = '<span class="mu">Загружаю данные…</span>';
   const j = await api('adminUsers');
-  $('ulist').innerHTML = (j.users || []).map(u => `<div class="ur${u.active ? '' : ' off'}"><div><b>${esc(u.name)}</b><div class="mu">+${esc(u.phone)} · ${u.role === 'admin' ? 'админ' : u.active ? 'доступ открыт' : 'доступ отключён'}</div></div>
-    ${u.role === 'admin' ? '' : `<button class="sw${u.active ? ' on' : ''}" role="switch" aria-checked="${u.active}" aria-label="Доступ сотрудника" data-act="${u.phone}" data-on="${u.active}"><i></i></button>`}</div>`).join('');
+  const RL = { user: 'Сотрудник', manager: 'Менеджер продаж', head: 'Руководитель отдела продаж', admin: 'Администратор' };
+  $('ulist').innerHTML = (j.users || []).map(u => `<div class="ur${u.active ? '' : ' off'}"><div><b>${esc(u.name)}</b><div class="mu">+${esc(u.phone)} · ${u.active ? 'доступ открыт' : 'доступ отключён'}</div></div>
+    ${u.role === 'admin' ? '' : `<button class="sw${u.active ? ' on' : ''}" role="switch" aria-checked="${u.active}" aria-label="Доступ сотрудника" data-act="${u.phone}" data-on="${u.active}"><i></i></button>`}
+    ${u.role === 'admin' ? `<div class="mu rl">${RL.admin}</div>` : `<select class="rs" data-role="${u.phone}" aria-label="Роль">${['user', 'manager', 'head', 'admin'].map(r => `<option value="${r}"${u.role === r ? ' selected' : ''}>${RL[r]}</option>`).join('')}</select>`}</div>`).join('');
+  $('ulist').querySelectorAll('[data-role]').forEach(s => s.onchange = async () => { s.disabled = true; const r = await api('adminSaveUser', { phone: s.dataset.role, role: s.value }); if (r.error) $('err').textContent = 'Не удалось изменить роль'; loadUsers(); });
   $('ulist').querySelectorAll('[data-act]').forEach(b => b.onclick = async () => {
     const on = b.dataset.on === 'true';
     if (on && !(await ask('Вы точно уверены, что хотите закрыть доступ для этого сотрудника?'))) return;
@@ -332,7 +336,7 @@ async function loadUsers() {
   });
 }
 $('us').onclick = async () => {
-  const j = await api('adminSaveUser', { name: $('un').value, phone: $('up').value, password: $('upw').value });
+  const j = await api('adminSaveUser', { name: $('un').value, phone: $('up').value, password: $('upw').value, role: $('ur').value });
   $('um').textContent = j.ok ? 'Сохранено' : ({ phone: 'Неверный номер', short: 'Пароль короче 6 знаков' }[j.error] || j.error); $('um').className = j.ok ? 'ok' : 'er';
   if (j.ok) { $('un').value = $('up').value = $('upw').value = ''; loadUsers(); }
 };

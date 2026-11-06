@@ -17,6 +17,7 @@ var PAY_H = ['id', 'phone', 'month', 'amount', 'date', 'note'];
 function paysSheet() { return sh('Выплаты', PAY_H); }
 var SESS_H = ['hash', 'phone', 'exp'];
 var REMEMBER_DAYS = 30;
+var ROLES = ['user', 'manager', 'head', 'admin'];
 function sessSheet() { return sh('Сессии', SESS_H); }
 function tokHash(t) { return hash('sess', t); }
 function delSessions(phone, h, keep) {
@@ -51,6 +52,7 @@ function putUser(phone, name, role, pass, must, keep) {
   delSessions(phone, '', keep);
   var salt = Utilities.getUuid(), h = hash(salt, pass), u = findUser(phone), s = users();
   s.getRange(1, 7).setValue('must');
+  s.getRange(2, 3, Math.max(1, s.getMaxRows() - 1), 1).setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(ROLES, true).setAllowInvalid(false).build());
   if (u) s.getRange(u.row, 1, 1, 7).setValues([[phone, name || u.name, role || u.role, salt, h, true, !!must]]);
   else { s.appendRow([phone, name, role || 'user', salt, h, true, !!must]); s.getRange(s.getLastRow(), 1).setNumberFormat('@').setValue(phone); }
 }
@@ -231,9 +233,15 @@ function adminSaveUser(b) {
     CacheService.getScriptCache().remove('u_' + phone);
     return { ok: true };
   }
+  var role = ROLES.indexOf(b.role) >= 0 ? b.role : (u && u.role) || 'user';
+  if (u && u.role === 'admin' && role !== 'admin') return { error: 'admin' };
   if (!u && (!b.password || String(b.password).length < 6)) return { error: 'short' };
-  if (u && !b.password) { users().getRange(u.row, 2).setValue(b.name || u.name); return { ok: true }; }
+  if (u && !b.password) {
+    users().getRange(u.row, 2, 1, 2).setValues([[b.name || u.name, role]]);
+    CacheService.getScriptCache().remove('u_' + phone);
+    return { ok: true };
+  }
   if (String(b.password).length < 6) return { error: 'short' };
-  putUser(phone, b.name || (u && u.name) || '', (u && u.role) || 'user', String(b.password), true);
+  putUser(phone, b.name || (u && u.name) || '', role, String(b.password), true);
   return { ok: true };
 }

@@ -11,7 +11,7 @@ function sh(name, head) {
   if (!s) { s = ss.insertSheet(name); s.appendRow(head); s.setFrozenRows(1); }
   return s;
 }
-var USERS_H = ['phone', 'name', 'role', 'salt', 'hash', 'active'];
+var USERS_H = ['phone', 'name', 'role', 'salt', 'hash', 'active', 'must'];
 var ROWS_H = ['phone', 'month', 'project', 'work', 'amount', 'updatedAt'];
 var PAY_H = ['id', 'phone', 'month', 'amount', 'date', 'note'];
 function paysSheet() { return sh('Выплаты', PAY_H); }
@@ -19,11 +19,11 @@ var SESS_H = ['hash', 'phone', 'exp'];
 var REMEMBER_DAYS = 30;
 function sessSheet() { return sh('Сессии', SESS_H); }
 function tokHash(t) { return hash('sess', t); }
-function delSessions(phone, h) {
+function delSessions(phone, h, keep) {
   var s = sessSheet(), n = s.getLastRow();
   if (n < 2) return;
   var v = s.getRange(2, 1, n - 1, 3).getValues(), now = Date.now();
-  for (var i = v.length - 1; i >= 0; i--) if (String(v[i][1]) === phone && !h || String(v[i][0]) === h || Number(v[i][2]) < now) s.deleteRow(i + 2);
+  for (var i = v.length - 1; i >= 0; i--) if (String(v[i][0]) !== keep && (String(v[i][1]) === phone && !h || String(v[i][0]) === h || Number(v[i][2]) < now)) s.deleteRow(i + 2);
 }
 function users() { return sh('Сотрудники', USERS_H); }
 function rows() { return sh('Записи', ROWS_H); }
@@ -42,23 +42,24 @@ function hash(salt, pass) {
 function findUser(phone) {
   var s = users(), n = s.getLastRow();
   if (n < 2) return null;
-  var v = s.getRange(2, 1, n - 1, 6).getValues();
-  for (var i = 0; i < v.length; i++) if (String(v[i][0]) === phone) return { row: i + 2, phone: String(v[i][0]), name: v[i][1], role: v[i][2], salt: v[i][3], hash: v[i][4], active: v[i][5] !== false && v[i][5] !== 'FALSE' };
+  var v = s.getRange(2, 1, n - 1, 7).getValues();
+  for (var i = 0; i < v.length; i++) if (String(v[i][0]) === phone) return { row: i + 2, phone: String(v[i][0]), name: v[i][1], role: v[i][2], salt: v[i][3], hash: v[i][4], active: v[i][5] !== false && v[i][5] !== 'FALSE', must: v[i][6] === true || v[i][6] === 'TRUE' };
   return null;
 }
-function putUser(phone, name, role, pass) {
+function putUser(phone, name, role, pass, must, keep) {
   CacheService.getScriptCache().remove('u_' + phone);
-  delSessions(phone, '');
+  delSessions(phone, '', keep);
   var salt = Utilities.getUuid(), h = hash(salt, pass), u = findUser(phone), s = users();
-  if (u) s.getRange(u.row, 1, 1, 6).setValues([[phone, name || u.name, role || u.role, salt, h, true]]);
-  else { s.appendRow([phone, name, role || 'user', salt, h, true]); s.getRange(s.getLastRow(), 1).setNumberFormat('@').setValue(phone); }
+  s.getRange(1, 7).setValue('must');
+  if (u) s.getRange(u.row, 1, 1, 7).setValues([[phone, name || u.name, role || u.role, salt, h, true, !!must]]);
+  else { s.appendRow([phone, name, role || 'user', salt, h, true, !!must]); s.getRange(s.getLastRow(), 1).setNumberFormat('@').setValue(phone); }
 }
 
 function setupAdmin() {
   paysSheet();
   if (ADMIN_PASSWORD.indexOf('ЗАМЕНИТЕ') === 0 || ADMIN_PASSWORD.length < 6) throw new Error('Впишите пароль админа (от 6 знаков)');
   users(); rows();
-  putUser(normPhone(ADMIN_PHONE), ADMIN_NAME, 'admin', ADMIN_PASSWORD);
+  putUser(normPhone(ADMIN_PHONE), ADMIN_NAME, 'admin', ADMIN_PASSWORD, false);
 }
 
 function doGet() { return out({ ok: true, app: 'kabinet', adminSet: users().getLastRow() > 1 }); }
@@ -71,6 +72,7 @@ function doPost(e) {
     if (b.action === 'login') return out(login(b));
     var me = auth(b.token);
     if (!me) return out({ error: 'auth' });
+    if (me.must && b.action !== 'changePassword' && b.action !== 'logout') return out({ error: 'must' });
     switch (b.action) {
       case 'logout': return out(logout(b));
       case 'myMonths': return out({ data: myMonths(me.phone), pays: myPays(me.phone) });
@@ -103,8 +105,9 @@ function login(b) {
     var ss = sessSheet(), r = ss.getLastRow() + 1;
     ss.getRange(r, 1, 1, 3).setNumberFormat('@').setValues([[tokHash(t), phone, String(Date.now() + REMEMBER_DAYS * 86400000)]]);
   }
-  var res = { token: t, name: u.name, role: u.role, phone: phone, editPast: EDIT_PAST_MONTHS, data: myMonths(phone), pays: myPays(phone) };
-  if (u.role === 'admin') { res.sumMonth = curMonth(); res.sum = adminMonth(res.sumMonth); }
+  var res = { token: t, name: u.name, role: u.role, phone: phone, editPast: EDIT_PAST_MONTHS, must: u.must };
+  if (!u.must) { res.data = myMonths(phone); res.pays = myPays(phone); }
+  if (u.role === 'admin' && !u.must) { res.sumMonth = curMonth(); res.sum = adminMonth(res.sumMonth); }
   return res;
 }
 function auth(t) {
@@ -122,7 +125,7 @@ function auth(t) {
   if (j) return JSON.parse(j);
   var u = findUser(phone);
   if (!u || !u.active) return null;
-  var m = { phone: u.phone, name: u.name, role: u.role };
+  var m = { phone: u.phone, name: u.name, role: u.role, must: u.must };
   c.put('u_' + phone, JSON.stringify(m), SESSION_SEC);
   return m;
 }
@@ -191,8 +194,8 @@ function logout(b) {
 function changePassword(me, b) {
   if (!b.newPassword || String(b.newPassword).length < 6) return { error: 'short' };
   var cu = findUser(me.phone);
-  if (hash(cu.salt, String(b.oldPassword || '')) !== cu.hash) return { error: 'wrong' };
-  putUser(me.phone, me.name, me.role, String(b.newPassword));
+  if (!cu.must && hash(cu.salt, String(b.oldPassword || '')) !== cu.hash) return { error: 'wrong' };
+  putUser(me.phone, me.name, me.role, String(b.newPassword), false, tokHash(b.token));
   return { ok: true };
 }
 
@@ -231,6 +234,6 @@ function adminSaveUser(b) {
   if (!u && (!b.password || String(b.password).length < 6)) return { error: 'short' };
   if (u && !b.password) { users().getRange(u.row, 2).setValue(b.name || u.name); return { ok: true }; }
   if (String(b.password).length < 6) return { error: 'short' };
-  putUser(phone, b.name || (u && u.name) || '', (u && u.role) || 'user', String(b.password));
+  putUser(phone, b.name || (u && u.name) || '', (u && u.role) || 'user', String(b.password), true);
   return { ok: true };
 }

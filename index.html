@@ -96,6 +96,14 @@ details[open] .chev::after{transform:rotate(-135deg);top:9px}
   <p id="lerr" class="er"></p>
 </div>
 
+<div id="setpw" class="card hide" style="max-width:380px;margin:60px auto">
+  <div class="brand">Twiglles</div><h1 style="font-size:28px">Задайте новый пароль</h1>
+  <p class="mu">Это ваш первый вход. Придумайте свой пароль, им вы будете входить дальше. Без этого продолжить нельзя.</p>
+  <div class="row" style="flex-direction:column"><input id="sp1" type="password" placeholder="Новый пароль (от 6 знаков)" autocomplete="new-password">
+  <input id="sp2" type="password" placeholder="Повторите пароль" autocomplete="new-password"><button id="spb">Сохранить и продолжить</button><button class="g" id="spo">Выйти</button></div>
+  <p id="sperr" class="er"></p>
+</div>
+
 <div id="app" class="hide">
   <h1 id="ttl" style="margin-bottom:18px"></h1>
   <div id="pwbox" class="card hide"><h2>Смена пароля</h2><div class="row"><input id="op" type="password" placeholder="Текущий пароль"><input id="np" type="password" placeholder="Новый (от 6 знаков)"><button id="pws">Сохранить</button></div><p id="pwm"></p></div>
@@ -145,14 +153,16 @@ async function api(action, body = {}) {
   if (!API) throw new Error('Не указан адрес сервера (const API в index.html)');
   const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action, token: S && S.token, ...body }) });
   const j = await r.json();
+  if (j.error === 'must' && S) { S.must = true; save(); show(); throw new Error('must'); }
   if (j.error === 'auth') { logout(); $('lerr').textContent = 'Сессия истекла, войдите снова'; throw new Error('Сессия истекла'); }
   return j;
 }
 function save() { try { (S.keep ? localStorage : sessionStorage).setItem('s', JSON.stringify(S)); } catch (e) {} }
 function logout() { if (S) api('logout').catch(() => {}); S = null; try { sessionStorage.clear(); localStorage.removeItem('s'); } catch (e) {} show(); }
 function show() {
-  $('login').classList.toggle('hide', !!S); $('bar').classList.toggle('hide', !S); $('app').classList.toggle('hide', !S);
-  if (!S) return;
+  const ok = S && !S.must;
+  $('login').classList.toggle('hide', !!S); $('bar').classList.toggle('hide', !ok); $('app').classList.toggle('hide', !ok); $('setpw').classList.toggle('hide', !(S && S.must));
+  if (!ok) return;
   $('who').textContent = S.name; $('role').textContent = S.role === 'admin' ? 'Администратор' : 'Сотрудник';
   $('atabs').classList.toggle('hide', S.role !== 'admin');
   $('ttl').textContent = S.name;
@@ -167,14 +177,26 @@ $('go').onclick = async () => {
     j.keep = $('rem').checked;
     if (j.error) { $('lerr').textContent = j.error === 'locked' ? 'Слишком много попыток. Подождите 15 минут.' : 'Неверный телефон или пароль'; return; }
     S = j; $('pw').value = '';
-    cs('m' + j.phone, { data: j.data || {}, pays: j.pays || {} });
+    if (!j.must) cs('m' + j.phone, { data: j.data || {}, pays: j.pays || {} });
     if (j.sum) cs('s' + j.sumMonth, j.sum);
     delete S.data; delete S.pays; delete S.sum; save(); show();
   } catch (e) { $('lerr').textContent = e.message; }
   finally { $('go').disabled = false; $('go').textContent = 'Войти'; ['ph', 'pw', 'rem'].forEach(i => $(i).disabled = false); }
 };
 $('pw').onkeydown = e => { if (e.key === 'Enter') $('go').click(); };
-$('out').onclick = logout;
+$('out').onclick = logout; $('spo').onclick = logout;
+$('spb').onclick = async () => {
+  const a = $('sp1').value, b = $('sp2').value;
+  if (a.length < 6) { $('sperr').textContent = 'Пароль должен быть не короче 6 знаков'; return; }
+  if (a !== b) { $('sperr').textContent = 'Пароли не совпадают'; return; }
+  $('sperr').textContent = ''; $('spb').disabled = true; $('spb').innerHTML = '<span class="spin"></span>Сохраняю…';
+  try {
+    const j = await api('changePassword', { newPassword: a });
+    if (j.error) { $('sperr').textContent = 'Не удалось сохранить, попробуйте ещё раз'; return; }
+    $('sp1').value = $('sp2').value = ''; S.must = false; save(); show();
+  } catch (e) { $('sperr').textContent = e.message; }
+  finally { $('spb').disabled = false; $('spb').textContent = 'Сохранить и продолжить'; }
+};
 $('pwbtn').onclick = () => { $('mpop').classList.add('hide'); $('pwbox').classList.toggle('hide'); };
 $('mbtn').onclick = e => { e.stopPropagation(); $('mpop').classList.toggle('hide'); };
 document.addEventListener('click', e => { if (!$('mpop').contains(e.target)) $('mpop').classList.add('hide'); });
@@ -260,7 +282,7 @@ async function doSave(month, phone, rows) {
     $('st').textContent = j.error ? 'Не сохранено: ' + j.error : 'Сохранено ✓'; $('st').className = j.error ? 'er' : 'ok';
   } catch (e) { $('st').textContent = 'Не сохранено: ' + e.message; $('st').className = 'er'; }
 }
-addEventListener('unhandledrejection', e => { const m = e.reason && e.reason.message; if (m && m !== 'Сессия истекла') $('err').textContent = 'Ошибка: ' + m; });
+addEventListener('unhandledrejection', e => { const m = e.reason && e.reason.message; if (m && m !== 'Сессия истекла' && m !== 'must') $('err').textContent = 'Ошибка: ' + m; });
 addEventListener('beforeunload', () => { if (timer) flush(); });
 
 async function loadSum() {

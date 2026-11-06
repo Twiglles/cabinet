@@ -35,6 +35,7 @@ td.n,th.n{width:130px}td.d{width:44px}
 .row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1;min-width:140px}
 details{border-top:1px solid var(--bd);padding:12px 0}summary{cursor:pointer;display:flex;justify-content:space-between;gap:4px 8px;font-weight:600}
 .hide{display:none}
+.imp{background:#fbeaea;border:1px solid rgba(140,14,14,.25);border-radius:12px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;font-size:14px}.imp.hide{display:none}.imp button{padding:8px 12px;font-size:13px}
 .spin{display:inline-block;width:14px;height:14px;margin-right:10px;vertical-align:-2px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
 .rem{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--mu);cursor:pointer}.rem input{width:20px;min-height:20px;height:20px;padding:0;accent-color:var(--ac);flex:none}
 .dlg{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px}.dlg.hide{display:none}
@@ -101,6 +102,7 @@ details[open] .chev::after{transform:rotate(-135deg);top:9px}
   <div id="err" class="er"></div>
   <div id="atabs" class="tabs hide"><button data-v="sum" class="on">Все зарплаты</button><button data-v="usr">Сотрудники</button><button data-v="me">Моя оплата</button></div>
 
+  <div id="imp" class="imp hide"><span>Вы смотрите кабинет сотрудника: <b id="impn"></b></span><button class="g" id="impb">← Назад к списку</button></div>
   <div id="vEmp">
     <h2 class="step">1. Выберите месяц</h2>
     <div class="mnav"><button class="g" id="mprev" aria-label="Предыдущий месяц">‹</button><select id="msel" aria-label="Месяц"></select><button class="g" id="mnext" aria-label="Следующий месяц">›</button></div>
@@ -137,7 +139,7 @@ const MN = ['Январь','Февраль','Март','Апрель','Май','
 const rub = n => (Math.round(n * 100) / 100).toLocaleString('ru-RU') + ' ₽';
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const mlabel = m => MN[+m.slice(5) - 1] + ' ' + m.slice(0, 4);
-let S = null, data = {}, pays = {}, cur = '', timer = null, target = null; // target: телефон сотрудника, которого правит админ (null = сам)
+let tname = '', S = null, data = {}, pays = {}, cur = '', timer = null, target = null; // target: телефон сотрудника, которого правит админ (null = сам)
 
 async function api(action, body = {}) {
   if (!API) throw new Error('Не указан адрес сервера (const API в index.html)');
@@ -183,7 +185,7 @@ $('pws').onclick = async () => {
 };
 document.querySelectorAll('#atabs button').forEach(b => b.onclick = () => view(b.dataset.v));
 function view(v) {
-  flush(); $('err').textContent = '';
+  flush(); $('err').textContent = ''; $('imp').classList.add('hide'); $('ttl').textContent = S.name;
   document.querySelectorAll('#atabs button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
   $('vEmp').classList.toggle('hide', v !== 'me'); $('vSum').classList.toggle('hide', v !== 'sum'); $('vUsr').classList.toggle('hide', v !== 'usr');
   if (v === 'me') { target = null; loadMine(); } else if (v === 'sum') loadSum(); else loadUsers();
@@ -220,7 +222,7 @@ $('mprev').onclick = () => step($('msel'), 1); $('mnext').onclick = () => step($
 $('aprev').onclick = () => step($('am'), 1); $('anext').onclick = () => step($('am'), -1);
 const locked = () => S.role !== 'admin' && !S.editPast && cur < nowM();
 function drawMonth() {
-  $('mt').textContent = '2. Работы за ' + mlabel(cur).toLowerCase() + (target ? ' — ' + target : '');
+  $('mt').textContent = '2. Работы за ' + mlabel(cur).toLowerCase() ;
   const rows = data[cur] && data[cur].length ? data[cur] : [{ p: '', w: '', a: '' }];
   data[cur] = rows;
   $('tb').innerHTML = rows.map((r, i) => `<tr><td class="p"><input data-i="${i}" data-k="p" value="${esc(r.p)}" placeholder="Название проекта"></td>
@@ -279,7 +281,7 @@ function drawSum(j) {
     <div class="mu" style="margin-top:8px">Выплаты:</div>
     ${x.pays.map(p => `<div class="pr"><span>${esc(p.d)} — <b>${rub(p.a)}</b>${p.n ? ' · ' + esc(p.n) : ''}</span><button class="x" data-delpay="${esc(p.id)}">✕</button></div>`).join('')}
     <div class="row" style="margin-top:6px"><input data-pa="${x.phone}" inputmode="decimal" placeholder="Сумма выплаты"><input data-pd="${x.phone}" type="date" value="${new Date().toISOString().slice(0, 10)}"><input data-pn="${x.phone}" placeholder="Комментарий"><button data-addpay="${x.phone}">Выплатить</button></div>
-    <button class="g" data-edit="${x.phone}" style="margin-top:8px">Править таблицу сотрудника</button></details>`).join('') : '<span class="mu">Сотрудников пока нет</span>';
+    <button class="g" data-edit="${x.phone}" data-name="${esc(x.name)}" style="margin-top:8px">Открыть кабинет сотрудника</button></details>`).join('') : '<span class="mu">Сотрудников пока нет</span>';
   $('alist').querySelectorAll('[data-addpay]').forEach(b => b.onclick = async () => {
     const ph = b.dataset.addpay, q = k => $('alist').querySelector(`[data-${k}="${ph}"]`);
     const j = await api('adminAddPay', { phone: ph, month: sel.value, amount: q('pa').value, date: q('pd').value, note: q('pn').value });
@@ -287,9 +289,10 @@ function drawSum(j) {
     $('err').textContent = ''; loadSum();
   });
   $('alist').querySelectorAll('[data-delpay]').forEach(b => b.onclick = async () => { await api('adminDelPay', { id: b.dataset.delpay }); loadSum(); });
-  $('alist').querySelectorAll('[data-edit]').forEach(b => b.onclick = () => { target = b.dataset.edit; cur = sel.value; view2(); });
+  $('alist').querySelectorAll('[data-edit]').forEach(b => b.onclick = () => { target = b.dataset.edit; tname = b.dataset.name; cur = sel.value; view2(); });
 }
-function view2() { document.querySelectorAll('#atabs button').forEach(b => b.classList.remove('on')); $('vEmp').classList.remove('hide'); $('vSum').classList.add('hide'); $('vUsr').classList.add('hide'); loadMine(); }
+function view2() { document.querySelectorAll('#atabs button').forEach(b => b.classList.remove('on')); $('vEmp').classList.remove('hide'); $('vSum').classList.add('hide'); $('vUsr').classList.add('hide'); $('imp').classList.remove('hide'); $('impn').textContent = tname; $('ttl').textContent = tname; loadMine(); }
+$('impb').onclick = () => view('sum');
 function ask(text) {
   $('dt').textContent = text; $('dlg').classList.remove('hide');
   return new Promise(res => { const done = v => { $('dlg').classList.add('hide'); res(v); }; $('dyes').onclick = () => done(true); $('dno').onclick = () => done(false); $('dlg').onclick = e => { if (e.target === $('dlg')) done(false); }; });

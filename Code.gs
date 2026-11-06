@@ -323,6 +323,7 @@ function adminSaveUser(b) {
   return { ok: true };
 }
 
+var ZP_MAP = { 'маша': '79106294522' };
 function importZp() {
   var ss = SpreadsheetApp.getActiveSpreadsheet(), src = null;
   ss.getSheets().forEach(function (x) { if (!src && /База|zp_import/.test(x.getName())) src = x; });
@@ -332,7 +333,7 @@ function importZp() {
   (items['@mgrs'] || []).forEach(function (m) { names[m.id] = String(m.name).toLowerCase().replace(/ё/g, 'е'); });
   var us = listUsers(), map = {}, log = [];
   Object.keys(names).forEach(function (id) {
-    var f = us.filter(function (u) { return gridFor(u.role) && String(u.name).toLowerCase().replace(/ё/g, 'е').indexOf(names[id]) === 0; });
+    var f = us.filter(function (u) { return gridFor(u.role) && (ZP_MAP[names[id]] ? u.phone === ZP_MAP[names[id]] : String(u.name).toLowerCase().replace(/ё/g, 'е').indexOf(names[id]) === 0); });
     if (f.length === 1) map[id] = f[0]; else log.push('Не найден сотрудник (с ролью менеджера/руководителя): ' + names[id]);
   });
   var s = salesSheet(), n = s.getLastRow(), have = {};

@@ -126,7 +126,7 @@ details[open] .chev::after{transform:rotate(-135deg);top:9px}
   <div id="vEmp">
     <h2 class="step">1. Выберите месяц</h2>
     <div class="mnav"><button class="g" id="mprev" aria-label="Предыдущий месяц">‹</button><select id="msel" aria-label="Месяц"></select><button class="g" id="mnext" aria-label="Следующий месяц">›</button></div>
-    <div id="seg" class="hide"><button data-t="s" class="on">Продажи</button><button data-t="w">Другие работы</button></div>
+    <div id="seg" class="hide"><button data-t="s" class="on">Продажи</button><button data-t="w">Другие должности</button></div>
     <div id="vSales" class="hide">
       <div class="card"><h2>Расчёт продаж</h2><div class="big" id="stot">0 ₽</div>
         <div class="st"><div><small>Выручка за месяц</small><b id="srev">0 ₽</b></div><div><small>Уровень ставки</small><b id="slvl"></b></div></div>
@@ -299,7 +299,7 @@ function total() {
   const tw = (data[cur] || []).reduce((s, r) => s + num(r.a), 0), ts = grid ? calcS(curS(), grid).total : 0, t = tw + ts, ps = pays[cur] || [], paid = ps.reduce((s, p) => s + p.a, 0), done = t > 0 && paid >= t;
   $('pay').innerHTML = `<h2>Расчёт за месяц</h2><div class="big">${rub(t)}</div>${bar(t, paid)}
     <div class="st"><div><small>Выплачено · ${pct(t, paid)}%</small><b class="ok">${rub(paid)}</b></div><div><small>Осталось выплатить</small><b>${done ? 'всё выплачено ✓' : rub(t - paid)}</b></div></div>` +
-    (grid ? `<div class="pl"><div><span>Продажи</span><b>${rub(ts)}</b></div><div><span>Другие работы</span><b>${rub(tw)}</b></div></div>` : '') + (ps.length ? `<div class="pl">${ps.map(p => `<div><span>${esc(p.d)}${p.n ? ' · ' + esc(p.n) : ''}</span><b>${rub(p.a)}</b></div>`).join('')}</div>` : '');
+    (grid ? `<div class="pl"><div><span>Продажи</span><b>${rub(ts)}</b></div><div><span>Другие должности</span><b>${rub(tw)}</b></div></div>` : '') + (ps.length ? `<div class="pl">${ps.map(p => `<div><span>${esc(p.d)}${p.n ? ' · ' + esc(p.n) : ''}</span><b>${rub(p.a)}</b></div>`).join('')}</div>` : '');
 }
 
 const CATS = [['Посты', 11], ['Долгосрок', 1], ['Тариф месяц', 2], ['Подборка', 6], ['Бизн.подп', 1], ['Партнерка', 1], ['Прочее', null]];

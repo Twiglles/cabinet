@@ -82,6 +82,13 @@ details[open] .chev::after{transform:rotate(-135deg);top:9px}
   #tb td.n input{text-align:right}
   .tot{font-size:18px}
 }
+#seg.hide{display:none}#seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:16px}#seg button{background:var(--card);color:var(--tx);border:1px solid var(--bd);padding:11px 4px;font-size:13px;line-height:1.2}#seg button.on{background:var(--ac);border-color:var(--ac);color:#fff}
+.cat{padding:14px 0;border-top:1px solid var(--bd)}.cat:first-child{border-top:0;padding-top:0}.cat .ch{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:8px}.cat .ch b{font-size:16px}
+.wk{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px}.wk small,.cat small{display:block;color:var(--mu);font-size:11px;margin-bottom:3px}.wk input{text-align:center;padding:10px 4px}
+.cat .prog{height:5px;margin:0 0 10px}.cat.full .prog i{background:var(--ok)}
+.line{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid var(--bd);font-size:14px}.line:first-child{border-top:0}.line.t{font-size:17px;font-weight:800}.line b{white-space:nowrap}
+.kpi{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px;font-size:14px}.kpi input{width:90px;flex:none;text-align:center}
+.nx{font-size:13px;color:var(--mu);margin:0 0 10px}
 .bar{position:sticky;top:0;z-index:10;background:var(--card);border-bottom:1px solid var(--bd)}
 .bar .in{max-width:720px;margin:0 auto;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px}
 .bar .brand{border:0;margin:0;padding:0}
@@ -119,11 +126,28 @@ details[open] .chev::after{transform:rotate(-135deg);top:9px}
   <div id="vEmp">
     <h2 class="step">1. Выберите месяц</h2>
     <div class="mnav"><button class="g" id="mprev" aria-label="Предыдущий месяц">‹</button><select id="msel" aria-label="Месяц"></select><button class="g" id="mnext" aria-label="Следующий месяц">›</button></div>
+    <div id="seg" class="hide"><button data-t="s" class="on">Продажи</button><button data-t="w">Копирайтинг и дизайн</button></div>
+    <div id="vSales" class="hide">
+      <div class="card"><h2>Расчёт продаж</h2><div class="big" id="stot">0 ₽</div>
+        <div class="st"><div><small>Выручка за месяц</small><b id="srev">0 ₽</b></div><div><small>Уровень ставки</small><b id="slvl"></b></div></div>
+        <div class="prog" style="margin:12px 0 6px"><i id="slp" style="width:0"></i></div><div class="nx" id="snx" style="margin:0"></div></div>
+      <div class="card"><h2>Продажи по тарифам</h2><p class="mu" style="margin:-4px 0 12px"><b>Шт.</b> по неделям месяца. <b>Выручка</b> — вся сумма по тарифу за месяц. На ЗП влияет только выручка.</p><div id="scats"></div></div>
+      <div class="card"><h2>Доплаты и вычеты</h2><label class="fl" style="margin-top:0" for="sadj">Корректировка, ₽ (+ или −)</label><input id="sadj" inputmode="text" autocomplete="off" placeholder="например 2162 или -500"><p class="mu" style="margin:8px 0 0">Плюс — премия или разовая доплата, минус — удержание. Добавится к ЗП.</p></div>
+      <div class="card hide" id="skm"><h2>Выручка компании и KPI</h2>
+        <label class="fl" style="margin-top:0" for="sco">Выручка компании за месяц, ₽</label><input id="sco" inputmode="decimal" autocomplete="off" placeholder="0"><p class="mu" style="margin:8px 0 0">Если выше 900 000 ₽, добавляется процент: 0,5% до 1 000 000, 1% до 1 200 000, 2% свыше.</p>
+        <details style="margin-top:12px"><summary>Премия KPI (40% от оклада)</summary><p class="mu" style="margin:6px 0 0">Процент выполнения плана, от 0 до 100.</p>
+          <div class="kpi"><span>Выручка (вес 50%)</span><input id="k0" inputmode="decimal" placeholder="%"></div>
+          <div class="kpi"><span>Сделки (вес 30%)</span><input id="k1" inputmode="decimal" placeholder="%"></div>
+          <div class="kpi"><span>Возвращаемость (вес 20%)</span><input id="k2" inputmode="decimal" placeholder="%"></div></details></div>
+      <div class="card"><h2>Как посчитана ЗП</h2><div id="scalc"></div></div>
+    </div>
+    <div id="vWork">
     <h2 id="mt" class="step" style="margin-top:20px"></h2>
     <div class="card"><div id="ldm" class="mu">Загружаю данные…</div>
       <table><thead><tr><th>Проект</th><th>Вид работы</th><th class="n">Сумма, ₽</th><th class="d"></th></tr></thead><tbody id="tb"></tbody></table>
       <div class="row" style="margin-top:10px"><button class="g" id="add" style="flex:none">+ Строка</button></div>
       <div class="mu" id="st" style="margin-top:6px"></div>
+    </div>
     </div>
     <div class="card" id="pay"></div>
   </div>
@@ -159,7 +183,7 @@ const MN = ['Январь','Февраль','Март','Апрель','Май','
 const rub = n => (Math.round(n * 100) / 100).toLocaleString('ru-RU') + ' ₽';
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const mlabel = m => MN[+m.slice(5) - 1] + ' ' + m.slice(0, 4);
-let tname = '', S = null, data = {}, pays = {}, cur = '', timer = null, target = null; // target: телефон сотрудника, которого правит админ (null = сам)
+let tname = '', S = null, data = {}, pays = {}, sales = {}, grid = null, seg = 's', pastOk = new Set(), cur = '', timer = null, target = null; // target: телефон сотрудника, которого правит админ (null = сам)
 
 async function api(action, body = {}) {
   if (!API) throw new Error('Не указан адрес сервера (const API в index.html)');
@@ -189,9 +213,9 @@ $('go').onclick = async () => {
     j.keep = $('rem').checked;
     if (j.error) { $('lerr').textContent = j.error === 'locked' ? 'Слишком много попыток. Подождите 15 минут.' : 'Неверный телефон или пароль'; return; }
     S = j; $('pw').value = '';
-    if (!j.must) cs('m' + j.phone, { data: j.data || {}, pays: j.pays || {} });
+    if (!j.must) cs('m' + j.phone, { data: j.data || {}, pays: j.pays || {}, sales: j.sales || {}, grid: j.grid || null });
     if (j.sum) cs('s' + j.sumMonth, j.sum);
-    delete S.data; delete S.pays; delete S.sum; save(); show();
+    delete S.data; delete S.pays; delete S.sales; delete S.grid; delete S.sum; save(); show();
   } catch (e) { $('lerr').textContent = e.message; }
   finally { $('go').disabled = false; $('go').textContent = 'Войти'; ['ph', 'pw', 'rem'].forEach(i => $(i).disabled = false); }
 };
@@ -236,14 +260,14 @@ const cs = (k, v) => { try { sessionStorage.setItem('c' + k, JSON.stringify(v));
 async function loadMine() {
   const key = 'm' + (target || S.phone);
   if (!cur) cur = nowM();
-  const c = ck(key); if (c) { data = c.data || {}; pays = c.pays || {}; drawTabs(); drawMonth(); }
-  else { data = {}; pays = {}; drawTabs(); $('mt').textContent = '2. Работы за ' + mlabel(cur).toLowerCase(); $('vEmp').classList.add('ld'); }
+  const c = ck(key); if (c) { data = c.data || {}; pays = c.pays || {}; sales = c.sales || {}; grid = c.grid || null; drawTabs(); drawMonth(); }
+  else { data = {}; pays = {}; sales = {}; grid = null; drawTabs(); $('mt').textContent = '2. Работы за ' + mlabel(cur).toLowerCase(); $('vEmp').classList.add('ld'); }
   try {
     const j = target ? await api('adminEmployeeMonths', { phone: target }) : await api('myMonths');
     if (timer) return;
     await queue;
     if (timer) return;
-    data = j.data || {}; pays = j.pays || {}; cs(key, { data, pays }); drawTabs(); drawMonth();
+    data = j.data || {}; pays = j.pays || {}; sales = j.sales || {}; grid = j.grid || null; cs(key, { data, pays, sales, grid }); drawTabs(); drawMonth();
   } finally { $('vEmp').classList.remove('ld'); }
 }
 function drawTabs() {
@@ -266,31 +290,91 @@ function drawMonth() {
   const lk = locked();
   $('tb').querySelectorAll('input').forEach(inp => { inp.disabled = lk; inp.oninput = () => { data[cur][+inp.dataset.i][inp.dataset.k] = inp.value; total(); dirty(); }; });
   $('tb').querySelectorAll('[data-del]').forEach(b => { b.disabled = lk; b.onclick = () => { data[cur].splice(+b.dataset.del, 1); drawMonth(); dirty(); }; });
-  $('add').disabled = lk; $('st').textContent = lk ? 'Этот месяц закрыт для правок' : ''; total();
+  $('add').disabled = lk; $('st').textContent = lk ? 'Этот месяц закрыт для правок' : ''; drawSales(); total();
 }
 const num = v => Number(String(v).replace(/\s/g, '').replace(',', '.')) || 0;
 const pct = (t, p) => t > 0 ? Math.min(100, Math.round(p / t * 100)) : 0;
 const bar = (t, p) => `<div class="prog"><i style="width:${pct(t, p)}%"></i></div>`;
 function total() {
-  const t = (data[cur] || []).reduce((s, r) => s + num(r.a), 0), ps = pays[cur] || [], paid = ps.reduce((s, p) => s + p.a, 0), done = t > 0 && paid >= t;
+  const tw = (data[cur] || []).reduce((s, r) => s + num(r.a), 0), ts = grid ? calcS(curS(), grid).total : 0, t = tw + ts, ps = pays[cur] || [], paid = ps.reduce((s, p) => s + p.a, 0), done = t > 0 && paid >= t;
   $('pay').innerHTML = `<h2>Расчёт за месяц</h2><div class="big">${rub(t)}</div>${bar(t, paid)}
     <div class="st"><div><small>Выплачено · ${pct(t, paid)}%</small><b class="ok">${rub(paid)}</b></div><div><small>Осталось выплатить</small><b>${done ? 'всё выплачено ✓' : rub(t - paid)}</b></div></div>` +
-    (ps.length ? `<div class="pl">${ps.map(p => `<div><span>${esc(p.d)}${p.n ? ' · ' + esc(p.n) : ''}</span><b>${rub(p.a)}</b></div>`).join('')}</div>` : '');
+    (grid ? `<div class="pl"><div><span>Продажи</span><b>${rub(ts)}</b></div><div><span>Копирайтинг и дизайн</span><b>${rub(tw)}</b></div></div>` : '') + (ps.length ? `<div class="pl">${ps.map(p => `<div><span>${esc(p.d)}${p.n ? ' · ' + esc(p.n) : ''}</span><b>${rub(p.a)}</b></div>`).join('')}</div>` : '');
 }
+
+const CATS = [['Посты', 11], ['Долгосрок', 1], ['Тариф месяц', 2], ['Подборка', 6], ['Бизн.подп', 1], ['Партнерка', 1], ['Прочее', null]];
+const TIERS = {
+  A: [[25000,5000,0],[50000,7500,3],[75000,10000,6],[100000,13000,8],[130000,15000,9],[160000,17000,10],[200000,25000,12],[230000,30000,13],[270000,35000,14],[300000,40000,15],[400000,45000,16],[500000,50000,18]],
+  KM: [[900000,50000,0],[1000000,50000,0.5],[1200000,50000,1],[1300000,50000,2]]
+};
+const KPI_W = [.5, .3, .2], OKLAD_KM = 50000, KPI_SHARE = .4;
+const tierFor = (rev, l) => { for (let i = 0; i < l.length; i++) if (rev <= l[i][0]) return i; return l.length - 1; };
+function calcS(s, g) {
+  const rev = s.cats.reduce((a, c) => a + num(c.rev), 0), adj = num(s.adj), i = tierFor(rev, TIERS.A), t = TIERS.A[i], km = g === 'KM';
+  const base = km ? OKLAD_KM : t[1], pc = t[2], part = rev * pc / 100;
+  let co = 0, cp = 0, comp = 0, bonus = 0;
+  if (km) { co = num(s.company); cp = TIERS.KM[tierFor(co, TIERS.KM)][2]; comp = co * cp / 100; bonus = OKLAD_KM * KPI_SHARE * KPI_W.reduce((a, w, k) => a + w * Math.min(100, Math.max(0, num(s.kpi[k]))) / 100, 0); }
+  return { rev, adj, i, base, pc, part, km, co, cp, comp, bonus, total: base + part + comp + bonus + adj };
+}
+const blankS = () => ({ adj: '', company: '', kpi: ['', '', ''], cats: CATS.map(() => ({ w: ['', '', '', ''], rev: '' })) });
+const curS = () => sales[cur] || (sales[cur] = blankS());
+function drawSales() {
+  $('seg').classList.toggle('hide', !grid);
+  $('vSales').classList.toggle('hide', !grid || seg !== 's'); $('vWork').classList.toggle('hide', !!grid && seg !== 'w');
+  document.querySelectorAll('#seg button').forEach(b => b.classList.toggle('on', b.dataset.t === seg));
+  if (!grid) return;
+  const d = curS(), lk = locked();
+  $('scats').innerHTML = CATS.map(([n, p], i) => `<div class="cat" id="cat${i}"><div class="ch"><b>${n}</b><span class="mu" id="pl${i}"></span></div>${p ? `<div class="prog"><i id="pb${i}" style="width:0"></i></div>` : ''}
+    <div class="wk">${[0, 1, 2, 3].map(k => `<div><small>Нед. ${k + 1}</small><input data-c="${i}" data-w="${k}" inputmode="numeric" placeholder="шт." value="${esc(d.cats[i].w[k])}"></div>`).join('')}</div>
+    <small>Выручка за месяц, ₽</small><input data-c="${i}" data-r="1" inputmode="decimal" placeholder="0" value="${esc(d.cats[i].rev)}"></div>`).join('');
+  $('sadj').value = d.adj; $('sco').value = d.company; [0, 1, 2].forEach(k => $('k' + k).value = d.kpi[k]);
+  $('skm').classList.toggle('hide', grid !== 'KM');
+  document.querySelectorAll('#vSales input').forEach(inp => inp.disabled = lk);
+  document.querySelectorAll('#scats input').forEach(inp => inp.oninput = () => { const c = d.cats[+inp.dataset.c]; if (inp.dataset.r) c.rev = inp.value; else c.w[+inp.dataset.w] = inp.value; sEdit(); });
+  $('sadj').oninput = () => { d.adj = $('sadj').value; sEdit(); }; $('sco').oninput = () => { d.company = $('sco').value; sEdit(); };
+  [0, 1, 2].forEach(k => $('k' + k).oninput = () => { d.kpi[k] = $('k' + k).value; sEdit(); });
+  updSales();
+}
+const sEdit = () => { updSales(); total(); dirty(); };
+function updSales() {
+  if (!grid) return;
+  const d = curS(), c = calcS(d, grid), list = TIERS.A, top = list[list.length - 1][0], prev = c.i ? list[c.i - 1][0] : 0;
+  $('stot').textContent = rub(c.total); $('srev').textContent = rub(c.rev); $('slvl').textContent = `${c.i + 1} из ${list.length}`;
+  $('slp').style.width = (c.rev >= top ? 100 : Math.max(0, Math.min(100, (c.rev - prev) / (list[c.i][0] - prev) * 100))) + '%';
+  $('snx').innerHTML = c.rev >= top ? 'Выше последнего уровня, применена максимальная ставка.' : `До следующего уровня ещё <b>${rub(list[c.i][0] - c.rev)}</b> выручки`;
+  CATS.forEach(([n, p], i) => {
+    const q = d.cats[i].w.reduce((a, v) => a + num(v), 0), rv = num(d.cats[i].rev);
+    $('pl' + i).innerHTML = (p ? `${q} из ${p} шт.` : `${q} шт.`) + (rv ? ` · <b>${rub(rv)}</b>` : '');
+    if (p) { $('pb' + i).style.width = Math.min(100, q / p * 100) + '%'; $('cat' + i).classList.toggle('full', q >= p); }
+  });
+  let k = 0; const L = (a, b, cl) => `<div class="line${cl || ''}"><span>${cl ? '' : ++k + '. '}${a}</span><b>${b}</b></div>`;
+  let h = L('Выручка менеджера', rub(c.rev)) + L(c.km ? 'Оклад ключевого менеджера' : 'Оклад уровня ' + (c.i + 1), rub(c.base)) + L(`Процент от выручки (${c.pc}%)`, rub(c.part));
+  if (c.km) h += L('Выручка компании', rub(c.co)) + L(`Доплата с выручки компании (${c.cp}%)`, rub(c.comp)) + L('Премия KPI', rub(c.bonus));
+  h += L('Корректировка (+ или −)', (c.adj > 0 ? '+ ' : '') + rub(c.adj)) + L('Итого по продажам', rub(c.total), ' t');
+  $('scalc').innerHTML = h;
+}
+document.querySelectorAll('#seg button').forEach(b => b.onclick = () => { seg = b.dataset.t; drawSales(); });
+$('vEmp').addEventListener('focusin', async e => {
+  if (!e.target.matches('input') || S.role === 'admin' || cur >= nowM() || pastOk.has(cur)) return;
+  const t = e.target; t.blur();
+  if (await ask('Вы меняете прошлый месяц. Вы уверены?', 'Да, менять')) { pastOk.add(cur); t.focus(); }
+});
 
 $('add').onclick = () => { data[cur].push({ p: '', w: '', a: '' }); drawMonth(); dirty(); };
 function dirty() { $('st').textContent = 'Сохранение…'; $('st').className = 'mu'; clearTimeout(timer); timer = setTimeout(flush, 1200); }
 let queue = Promise.resolve();
 function flush() {
   if (!timer) return queue; clearTimeout(timer); timer = null;
-  const month = cur, phone = target || undefined, rows = data[month].map(r => ({ p: r.p, w: r.w, a: num(r.a) }));
-  cs('m' + (target || S.phone), { data, pays });
-  queue = queue.then(() => doSave(month, phone, rows), () => doSave(month, phone, rows));
+  const month = cur, phone = target || undefined, rows = data[month].map(r => ({ p: r.p, w: r.w, a: num(r.a) })), sl = grid ? JSON.parse(JSON.stringify(curS())) : null;
+  cs('m' + (target || S.phone), { data, pays, sales, grid });
+  const go = () => doSave(month, phone, rows, sl);
+  queue = queue.then(go, go);
   return queue;
 }
-async function doSave(month, phone, rows) {
+async function doSave(month, phone, rows, sl) {
   try {
-    const j = await api('saveMonth', { month, phone, rows });
+    let j = await api('saveMonth', { month, phone, rows });
+    if (!j.error && sl) j = await api('saveSales', { month, phone, sales: sl });
     $('st').textContent = j.error ? 'Не сохранено: ' + j.error : 'Сохранено ✓'; $('st').className = j.error ? 'er' : 'ok';
   } catch (e) { $('st').textContent = 'Не сохранено: ' + e.message; $('st').className = 'er'; }
 }
@@ -311,7 +395,7 @@ function drawSum(j) {
   const gt = e.reduce((s, x) => s + x.total, 0), gp = e.reduce((s, x) => s + x.paid, 0);
   $('gt').innerHTML = `<div class="big">${rub(gt)}</div>${bar(gt, gp)}<div class="st"><div><small>Выплачено · ${pct(gt, gp)}%</small><b class="ok">${rub(gp)}</b></div><div><small>Осталось</small><b>${rub(gt - gp)}</b></div></div>`;
   $('alist').innerHTML = e.length ? e.map(x => `<details data-ph="${x.phone}"${opened.has(x.phone) ? ' open' : ''}><summary><span class="nm">${esc(x.name)}</span><b>${rub(x.total)}</b><i class="chev"></i><span class="mu det">выплачено ${rub(x.paid)} · осталось ${rub(x.total - x.paid)}</span></summary>
-    <table style="margin-top:6px">${x.rows.map(r => `<tr><td>${esc(r.p)}</td><td>${esc(r.w)}</td><td class="n" style="text-align:right">${rub(r.a)}</td></tr>`).join('') || '<tr><td class="mu">Записей нет</td></tr>'}</table>
+    <table style="margin-top:6px">${x.sales != null ? `<tr><td colspan="2">Продажи (расчёт менеджера)</td><td class="n" style="text-align:right">${rub(x.sales)}</td></tr>` : ''}${x.rows.map(r => `<tr><td>${esc(r.p)}</td><td>${esc(r.w)}</td><td class="n" style="text-align:right">${rub(r.a)}</td></tr>`).join('') || (x.sales != null ? '' : '<tr><td class="mu">Записей нет</td></tr>')}</table>
     <div class="mu" style="margin-top:8px">Выплаты:</div>
     ${x.pays.map(p => `<div class="pr"><span>${esc(p.d)} — <b>${rub(p.a)}</b>${p.n ? ' · ' + esc(p.n) : ''}</span><button class="x" data-delpay="${esc(p.id)}">✕</button></div>`).join('')}
     <div class="row" style="margin-top:6px"><input data-pa="${x.phone}" inputmode="decimal" placeholder="Сумма выплаты"><input data-pd="${x.phone}" type="date" value="${new Date().toISOString().slice(0, 10)}"><input data-pn="${x.phone}" placeholder="Комментарий"><button data-addpay="${x.phone}">Выплатить</button></div>
@@ -327,8 +411,8 @@ function drawSum(j) {
 }
 function view2() { document.querySelectorAll('#atabs button').forEach(b => b.classList.remove('on')); $('vEmp').classList.remove('hide'); $('vSum').classList.add('hide'); $('vUsr').classList.add('hide'); $('imp').classList.remove('hide'); $('impn').textContent = tname; $('ttl').textContent = tname; loadMine(); }
 $('impb').onclick = () => view('sum');
-function ask(text) {
-  $('dt').textContent = text; $('dlg').classList.remove('hide');
+function ask(text, yes) {
+  $('dt').textContent = text; $('dyes').textContent = yes || 'Да, закрыть'; $('dlg').classList.remove('hide');
   return new Promise(res => { const done = v => { $('dlg').classList.add('hide'); res(v); }; $('dyes').onclick = () => done(true); $('dno').onclick = () => done(false); $('dlg').onclick = e => { if (e.target === $('dlg')) done(false); }; });
 }
 async function loadUsers() {

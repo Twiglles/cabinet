@@ -18,6 +18,54 @@ function paysSheet() { return sh('Выплаты', PAY_H); }
 var SESS_H = ['hash', 'phone', 'exp'];
 var REMEMBER_DAYS = 30;
 var ROLES = ['user', 'manager', 'head', 'admin'];
+var SALES_H = ['phone', 'month', 'json', 'total', 'updatedAt'];
+var TIERS = {
+  A: [[25000, 5000, 0], [50000, 7500, 3], [75000, 10000, 6], [100000, 13000, 8], [130000, 15000, 9], [160000, 17000, 10], [200000, 25000, 12], [230000, 30000, 13], [270000, 35000, 14], [300000, 40000, 15], [400000, 45000, 16], [500000, 50000, 18]],
+  KM: [[900000, 50000, 0], [1000000, 50000, 0.5], [1200000, 50000, 1], [1300000, 50000, 2]]
+};
+var OKLAD_KM = 50000, KPI_SHARE = 0.4, KPI_W = [0.5, 0.3, 0.2];
+function gridFor(role) { return role === 'head' ? 'KM' : role === 'manager' ? 'A' : null; }
+function snum(v) { return Number(String(v == null ? '' : v).replace(/\s/g, '').replace(',', '.')) || 0; }
+function tierFor(rev, list) { for (var i = 0; i < list.length; i++) if (rev <= list[i][0]) return i; return list.length - 1; }
+function calcSales(s, grid) {
+  var rev = 0; (s.cats || []).forEach(function (c) { rev += snum(c.rev); });
+  var adj = snum(s.adj), i = tierFor(rev, TIERS.A), t = TIERS.A[i];
+  var base = grid === 'KM' ? OKLAD_KM : t[1], sum = base + rev * t[2] / 100, extra = 0;
+  if (grid === 'KM') {
+    var co = snum(s.company), cp = TIERS.KM[tierFor(co, TIERS.KM)][2], kp = 0;
+    KPI_W.forEach(function (w, k) { kp += w * Math.min(100, Math.max(0, snum((s.kpi || [])[k]))) / 100; });
+    extra = co * cp / 100 + OKLAD_KM * KPI_SHARE * kp;
+  }
+  return { rev: rev, total: Math.round((sum + extra + adj) * 100) / 100 };
+}
+function salesSheet() { return sh('Продажи', SALES_H); }
+function salesMap(phone) {
+  var s = salesSheet(), n = s.getLastRow(), res = {};
+  if (n < 2) return res;
+  s.getRange(2, 1, n - 1, 3).getValues().forEach(function (r) {
+    if (String(r[0]) !== phone) return;
+    try { res[ms(r[1])] = JSON.parse(r[2]); } catch (e) {}
+  });
+  return res;
+}
+function myData(phone, role) {
+  var g = gridFor(role), res = { data: myMonths(phone), pays: myPays(phone), grid: g };
+  if (g) res.sales = salesMap(phone);
+  return res;
+}
+function saveSales(me, b) {
+  var phone = me.phone, role = me.role, month = String(b.month || '');
+  if (me.role === 'admin' && b.phone) { phone = normPhone(b.phone); var tu = findUser(phone); role = tu && tu.role; }
+  if (!/^\d{4}-\d{2}$/.test(month)) return { error: 'bad month' };
+  var g = gridFor(role); if (!g) return { error: 'nosales' };
+  var x = b.sales || {}, cl = { adj: String(x.adj || '').slice(0, 20), company: String(x.company || '').slice(0, 20), kpi: [0, 1, 2].map(function (k) { return String((x.kpi || [])[k] || '').slice(0, 6); }), cats: [] };
+  for (var i = 0; i < 7; i++) { var c = (x.cats || [])[i] || {}; cl.cats.push({ w: [0, 1, 2, 3].map(function (k) { return String((c.w || [])[k] || '').slice(0, 8); }), rev: String(c.rev || '').slice(0, 15) }); }
+  var tot = calcSales(cl, g).total, s = salesSheet(), n = s.getLastRow(), row = 0;
+  if (n > 1) { var v = s.getRange(2, 1, n - 1, 2).getValues(); for (var j = 0; j < v.length; j++) if (String(v[j][0]) === phone && ms(v[j][1]) === month) { row = j + 2; break; } }
+  if (!row) { row = n + 1; s.getRange(row, 1, 1, 3).setNumberFormat('@'); }
+  s.getRange(row, 1, 1, 5).setValues([[phone, month, JSON.stringify(cl), tot, Date.now()]]);
+  return { saved: 1, total: tot };
+}
 function sessSheet() { return sh('Сессии', SESS_H); }
 function tokHash(t) { return hash('sess', t); }
 function delSessions(phone, h, keep) {
@@ -68,7 +116,7 @@ function doGet() { return out({ ok: true, app: 'kabinet', adminSet: users().getL
 
 function doPost(e) {
   var b; try { b = JSON.parse(e.postData.contents); } catch (x) { return out({ error: 'bad' }); }
-  var W = { logout: 1, adminAddPay: 1, adminDelPay: 1, saveMonth: 1, changePassword: 1, adminSaveUser: 1 }, lock = null;
+  var W = { logout: 1, adminAddPay: 1, adminDelPay: 1, saveMonth: 1, saveSales: 1, changePassword: 1, adminSaveUser: 1 }, lock = null;
   if (W[b.action]) { lock = LockService.getScriptLock(); lock.waitLock(20000); }
   try {
     if (b.action === 'login') return out(login(b));
@@ -77,15 +125,16 @@ function doPost(e) {
     if (me.must && b.action !== 'changePassword' && b.action !== 'logout') return out({ error: 'must' });
     switch (b.action) {
       case 'logout': return out(logout(b));
-      case 'myMonths': return out({ data: myMonths(me.phone), pays: myPays(me.phone) });
+      case 'myMonths': return out(myData(me.phone, me.role));
       case 'saveMonth': return out(saveMonth(me, b));
+      case 'saveSales': return out(saveSales(me, b));
       case 'changePassword': return out(changePassword(me, b));
       case 'adminMonth': return admin(me) || out(adminMonth(b.month));
       case 'adminUsers': return admin(me) || out({ users: listUsers() });
       case 'adminAddPay': return admin(me) || out(adminAddPay(b));
       case 'adminDelPay': return admin(me) || out(adminDelPay(b));
       case 'adminSaveUser': return admin(me) || out(adminSaveUser(b));
-      case 'adminEmployeeMonths': return admin(me) || out({ data: myMonths(normPhone(b.phone)), pays: myPays(normPhone(b.phone)) });
+      case 'adminEmployeeMonths': return admin(me) || out(myData(normPhone(b.phone), (findUser(normPhone(b.phone)) || {}).role));
     }
     return out({ error: 'bad action' });
   } finally { if (lock) lock.releaseLock(); }
@@ -108,7 +157,7 @@ function login(b) {
     ss.getRange(r, 1, 1, 3).setNumberFormat('@').setValues([[tokHash(t), phone, String(Date.now() + REMEMBER_DAYS * 86400000)]]);
   }
   var res = { token: t, name: u.name, role: u.role, phone: phone, editPast: EDIT_PAST_MONTHS, must: u.must };
-  if (!u.must) { res.data = myMonths(phone); res.pays = myPays(phone); }
+  if (!u.must) { var md = myData(phone, u.role); res.data = md.data; res.pays = md.pays; res.sales = md.sales; res.grid = md.grid; }
   if (u.role === 'admin' && !u.must) { res.sumMonth = curMonth(); res.sum = adminMonth(res.sumMonth); }
   return res;
 }
@@ -208,13 +257,18 @@ function listUsers() {
 }
 function adminMonth(month) {
   var us = listUsers(), by = {};
-  us.forEach(function (u) { by[u.phone] = { phone: u.phone, name: u.name, active: u.active, rows: [], total: 0 }; });
+  us.forEach(function (u) { by[u.phone] = { phone: u.phone, name: u.name, active: u.active, role: u.role, rows: [], total: 0 }; });
   var s = rows(), n = s.getLastRow();
   if (n > 1) s.getRange(2, 1, n - 1, 5).getValues().forEach(function (r) {
     if (ms(r[1]) !== month) return;
     var p = String(r[0]); if (!by[p]) return;
     var a = Number(r[4]) || 0;
     by[p].rows.push({ p: r[2], w: r[3], a: a }); by[p].total += a;
+  });
+  var ss = salesSheet(), sn = ss.getLastRow();
+  if (sn > 1) ss.getRange(2, 1, sn - 1, 4).getValues().forEach(function (r) {
+    var p = String(r[0]); if (ms(r[1]) !== month || !by[p] || !gridFor(by[p].role)) return;
+    var t = Number(r[3]) || 0; by[p].sales = t; by[p].total += t;
   });
   Object.keys(by).forEach(function (k) { by[k].pays = []; by[k].paid = 0; });
   allPays().forEach(function (p) {

@@ -24,7 +24,8 @@ var TIERS = {
   KM: [[900000, 50000, 0], [1000000, 50000, 0.5], [1200000, 50000, 1], [1300000, 50000, 2]]
 };
 var OKLAD_KM = 50000, KPI_SHARE = 0.4, KPI_W = [0.5, 0.3, 0.2];
-function gridFor(role) { return role === 'head' ? 'KM' : role === 'manager' ? 'A' : null; }
+var KM_FROM = '2026-08';
+function gridFor(role, month) { var g = role === 'head' ? 'KM' : role === 'manager' ? 'A' : null; if (g === 'KM' && month && month < KM_FROM) g = 'A'; return g; }
 function snum(v) { return Number(String(v == null ? '' : v).replace(/\s/g, '').replace(',', '.')) || 0; }
 function tierFor(rev, list) { for (var i = 0; i < list.length; i++) if (rev <= list[i][0]) return i; return list.length - 1; }
 function calcSales(s, grid) {
@@ -55,9 +56,9 @@ function myData(phone, role) {
 }
 function saveSales(me, b) {
   var phone = me.phone, role = me.role, month = String(b.month || '');
-  if (me.role === 'admin' && b.phone) { phone = normPhone(b.phone); var tu = findUser(phone); role = tu && tu.role; }
+  if ((me.role === 'admin' || me.role === 'head') && b.phone) { phone = normPhone(b.phone); var tu = findUser(phone); role = tu && tu.role; if (me.role === 'head' && role !== 'manager') return { error: 'forbidden' }; }
   if (!/^\d{4}-\d{2}$/.test(month)) return { error: 'bad month' };
-  var g = gridFor(role); if (!g) return { error: 'nosales' };
+  var g = gridFor(role, month); if (!g) return { error: 'nosales' };
   var x = b.sales || {}, cl = { adj: String(x.adj || '').slice(0, 20), company: String(x.company || '').slice(0, 20), kpi: [0, 1, 2].map(function (k) { return String((x.kpi || [])[k] || '').slice(0, 6); }), cats: [] };
   for (var i = 0; i < 7; i++) { var c = (x.cats || [])[i] || {}; cl.cats.push({ w: [0, 1, 2, 3].map(function (k) { return String((c.w || [])[k] || '').slice(0, 8); }), rev: String(c.rev || '').slice(0, 15) }); }
   var tot = calcSales(cl, g).total, s = salesSheet(), n = s.getLastRow(), row = 0;
@@ -129,6 +130,8 @@ function doPost(e) {
       case 'saveMonth': return out(saveMonth(me, b));
       case 'saveSales': return out(saveSales(me, b));
       case 'changePassword': return out(changePassword(me, b));
+      case 'headMonth': return head(me) || out(headMonth(b.month));
+      case 'headEmployee': return head(me) || out(headEmployee(normPhone(b.phone)));
       case 'adminMonth': return admin(me) || out(adminMonth(b.month));
       case 'adminUsers': return admin(me) || out({ users: listUsers() });
       case 'adminAddPay': return admin(me) || out(adminAddPay(b));
@@ -138,6 +141,26 @@ function doPost(e) {
     }
     return out({ error: 'bad action' });
   } finally { if (lock) lock.releaseLock(); }
+}
+function head(me) { return me.role === 'head' ? null : out({ error: 'forbidden' }); }
+function headMonth(month) {
+  var by = {}, res = [];
+  listUsers().forEach(function (u) { if (u.role === 'manager' && u.active) { by[u.phone] = { phone: u.phone, name: u.name, rev: 0, total: 0 }; res.push(by[u.phone]); } });
+  var s = salesSheet(), n = s.getLastRow();
+  if (n > 1) s.getRange(2, 1, n - 1, 4).getValues().forEach(function (r) {
+    var p = String(r[0]); if (ms(r[1]) !== month || !by[p]) return;
+    by[p].total = Number(r[3]) || 0;
+  });
+  if (n > 1) s.getRange(2, 1, n - 1, 3).getValues().forEach(function (r) {
+    var p = String(r[0]); if (ms(r[1]) !== month || !by[p]) return;
+    try { by[p].rev = calcSales(JSON.parse(r[2]), 'A').rev; } catch (e) {}
+  });
+  return { month: month, employees: res };
+}
+function headEmployee(phone) {
+  var u = findUser(phone);
+  if (!u || u.role !== 'manager') return { error: 'forbidden' };
+  return { data: {}, pays: {}, sales: salesMap(phone), grid: 'A' };
 }
 function admin(me) { return me.role === 'admin' ? null : out({ error: 'forbidden' }); }
 
@@ -298,4 +321,40 @@ function adminSaveUser(b) {
   if (String(b.password).length < 6) return { error: 'short' };
   putUser(phone, b.name || (u && u.name) || '', role, String(b.password), true);
   return { ok: true };
+}
+
+function importZp() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), src = null;
+  ss.getSheets().forEach(function (x) { if (!src && /База|zp_import/.test(x.getName())) src = x; });
+  if (!src) throw new Error('Нет листа с данными zp: скопируйте лист «База» из таблицы zp в эту таблицу');
+  var v = src.getDataRange().getValues(), items = {}, names = {};
+  v.forEach(function (r) { if (!r[0]) return; try { items[String(r[0])] = JSON.parse(r[2]); } catch (e) {} });
+  (items['@mgrs'] || []).forEach(function (m) { names[m.id] = String(m.name).toLowerCase().replace(/ё/g, 'е'); });
+  var us = listUsers(), map = {}, log = [];
+  Object.keys(names).forEach(function (id) {
+    var f = us.filter(function (u) { return gridFor(u.role) && String(u.name).toLowerCase().replace(/ё/g, 'е').indexOf(names[id]) === 0; });
+    if (f.length === 1) map[id] = f[0]; else log.push('Не найден сотрудник (с ролью менеджера/руководителя): ' + names[id]);
+  });
+  var s = salesSheet(), n = s.getLastRow(), have = {};
+  if (n > 1) s.getRange(2, 1, n - 1, 2).getValues().forEach(function (r) { have[String(r[0]) + '|' + ms(r[1])] = 1; });
+  var add = [], now = Date.now(), cnt = {};
+  Object.keys(items).forEach(function (k) {
+    var q = k.split('|'); if (q.length !== 2 || !map[q[0]] || !/^\d{4}-\d{2}$/.test(q[1])) return;
+    var d = items[k], u = map[q[0]], key = u.phone + '|' + q[1];
+    if (have[key] || !d || !d.cats) return;
+    var cl = { adj: String(d.adj || ''), company: String(d.company || ''), kpi: [0, 1, 2].map(function (i) { return String((d.kpi || [])[i] || ''); }), cats: d.cats.slice(0, 7).map(function (c) { return { w: [0, 1, 2, 3].map(function (i) { return String((c.w || [])[i] || ''); }), rev: String(c.rev || '') }; }) };
+    var used = cl.cats.some(function (c) { return snum(c.rev) || c.w.some(snum); }) || snum(cl.adj) || snum(cl.company);
+    if (!used) return;
+    add.push([u.phone, q[1], JSON.stringify(cl), calcSales(cl, gridFor(u.role, q[1])).total, now]);
+    cnt[u.name] = (cnt[u.name] || 0) + 1;
+  });
+  if (add.length) {
+    var st = s.getLastRow() + 1;
+    s.getRange(st, 1, add.length, 2).setNumberFormat('@');
+    s.getRange(st, 1, add.length, 5).setValues(add);
+  }
+  Object.keys(cnt).forEach(function (k) { log.push(k + ': перенесено месяцев ' + cnt[k]); });
+  log.push('Всего строк: ' + add.length);
+  Logger.log(log.join('\n'));
+  return log.join('\n');
 }

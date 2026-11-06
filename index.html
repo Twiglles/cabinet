@@ -51,7 +51,7 @@ details{border-top:1px solid var(--bd);padding:12px 0}summary{cursor:pointer;dis
 .prog{height:8px;border-radius:4px;background:#e4e4e1;overflow:hidden;margin:0 0 14px}.prog i{display:block;height:100%;background:var(--ok);border-radius:4px;transition:width .3s}
 .pl{margin-top:14px;padding-top:12px;border-top:1px solid var(--bd);font-size:14px}.pl>div{display:flex;justify-content:space-between;gap:10px;padding:3px 0}.pl span{color:var(--mu)}
 #ldm{display:none;font-size:15px;padding:8px 0}.ld #ldm{display:block}.ld #ldm~*{display:none}
-#atabs.hide{display:none}#atabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;overflow:visible;margin-bottom:16px}#atabs button{padding:10px 4px;font-size:13px;white-space:normal;line-height:1.2}
+#atabs.hide{display:none}#atabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;overflow:visible;margin-bottom:16px}#atabs button.hide{display:none}#atabs button{padding:10px 4px;font-size:13px;white-space:normal;line-height:1.2}
 h2.step{margin:0 0 8px}
 .mnav select,.mnav button.g{background-color:var(--card)}
 .mnav{display:grid;grid-template-columns:52px 1fr 52px;gap:8px;margin-bottom:16px}
@@ -82,6 +82,7 @@ details[open] .chev::after{transform:rotate(-135deg);top:9px}
   #tb td.n input{text-align:right}
   .tot{font-size:18px}
 }
+#vEmp.sub #seg,#vEmp.sub #vWork,#vEmp.sub #pay{display:none!important}.dr{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;text-align:left;background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:12px;padding:14px;margin-bottom:10px;min-height:56px}.dr:hover{background:var(--card);border-color:var(--ach)}.dr b{font-size:17px}.dr small{display:block;color:var(--mu);font-weight:500;font-size:13px}.dr>div:last-child{text-align:right}
 #seg.hide{display:none}#seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:16px}#seg button{background:var(--card);color:var(--tx);border:1px solid var(--bd);padding:11px 4px;font-size:13px;line-height:1.2}#seg button.on{background:var(--ac);border-color:var(--ac);color:#fff}
 .sh.r5,.r5{display:grid;grid-template-columns:repeat(4,1fr) 2.4fr;gap:6px}.sh{font:700 11px Montserrat,sans-serif;color:var(--mu);margin-bottom:4px;text-align:center}.sh span:last-child{text-align:right;padding-right:4px}
 .cat{padding:10px 0 12px;border-top:1px solid var(--bd)}.cat .ch{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px}.cat .ch b{font-size:15px}.cat .ch .mu{font-size:12px}
@@ -121,7 +122,7 @@ details[open] .chev::after{transform:rotate(-135deg);top:9px}
   <h1 id="ttl" style="margin-bottom:18px"></h1>
   <div id="pwbox" class="card hide"><h2>Смена пароля</h2><div class="row"><input id="op" type="password" placeholder="Текущий пароль"><input id="np" type="password" placeholder="Новый (от 6 знаков)"><button id="pws">Сохранить</button></div><p id="pwm"></p></div>
   <div id="err" class="er"></div>
-  <div id="atabs" class="tabs hide"><button data-v="sum" class="on">Все зарплаты</button><button data-v="usr">Сотрудники</button><button data-v="me">Моя оплата</button></div>
+  <div id="atabs" class="tabs hide"><button data-v="sum" data-r="admin" class="on">Все зарплаты</button><button data-v="usr" data-r="admin">Сотрудники</button><button data-v="dep" data-r="head">Отдел</button><button data-v="me" data-r="admin head">Моя оплата</button></div>
 
   <div id="imp" class="imp hide"><span>Вы смотрите кабинет сотрудника: <b id="impn"></b></span><button class="g" id="impb">← Назад к списку</button></div>
   <div id="vEmp">
@@ -161,6 +162,13 @@ details[open] .chev::after{transform:rotate(-135deg);top:9px}
     <div id="alist"></div>
   </div>
 
+  <div id="vDep" class="hide">
+    <h2 class="step">Выберите месяц</h2>
+    <div class="mnav"><button class="g" id="dprev" aria-label="Предыдущий месяц">‹</button><select id="dm" aria-label="Месяц"></select><button class="g" id="dnext" aria-label="Следующий месяц">›</button></div>
+    <div class="card"><h2>Выручка отдела</h2><div id="dtot"></div></div>
+    <p class="mu" style="margin:0 0 10px">Нажмите на менеджера, чтобы открыть и поправить его продажи</p>
+    <div id="dlist"></div>
+  </div>
   <div id="vUsr" class="hide">
     <button id="addu" class="addu">+ Добавить сотрудника</button>
     <div class="card"><h2>Список сотрудников</h2><p class="mu" style="margin:-4px 0 6px">Нажмите на сотрудника, чтобы изменить роль или сбросить пароль.</p><div id="ulist"></div></div>
@@ -200,10 +208,12 @@ function show() {
   const ok = S && !S.must;
   $('login').classList.toggle('hide', !!S); $('bar').classList.toggle('hide', !ok); $('app').classList.toggle('hide', !ok); $('setpw').classList.toggle('hide', !(S && S.must));
   if (!ok) return;
-  $('who').textContent = S.name; $('role').textContent = S.role === 'admin' ? 'Администратор' : 'Сотрудник';
-  $('atabs').classList.toggle('hide', S.role !== 'admin');
+  $('who').textContent = S.name; 
+  const tb = [...document.querySelectorAll('#atabs button')].filter(b => b.dataset.r.split(' ').includes(S.role));
+  document.querySelectorAll('#atabs button').forEach(b => b.classList.toggle('hide', !tb.includes(b))); $('atabs').style.gridTemplateColumns = 'repeat(' + tb.length + ',1fr)'; $('atabs').classList.toggle('hide', !tb.length);
   $('ttl').textContent = S.name;
   view(S.role === 'admin' ? 'sum' : 'me');
+  $('role').textContent = { admin: 'Администратор', head: 'Руководитель отдела продаж', manager: 'Менеджер продаж' }[S.role] || 'Сотрудник';
 }
 $('go').onclick = async () => {
   if ($('go').disabled) return;
@@ -246,8 +256,9 @@ document.querySelectorAll('#atabs button').forEach(b => b.onclick = () => view(b
 function view(v) {
   flush(); $('err').textContent = ''; $('imp').classList.add('hide'); $('ttl').textContent = S.name;
   document.querySelectorAll('#atabs button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+  $('vEmp').classList.remove('sub'); $('vDep').classList.toggle('hide', v !== 'dep');
   $('vEmp').classList.toggle('hide', v !== 'me'); $('vSum').classList.toggle('hide', v !== 'sum'); $('vUsr').classList.toggle('hide', v !== 'usr');
-  if (v === 'me') { target = null; loadMine(); } else if (v === 'sum') loadSum(); else loadUsers();
+  if (v === 'me') { target = null; loadMine(); } else if (v === 'sum') loadSum(); else if (v === 'dep') loadDep(); else loadUsers();
 }
 
 function monthList() {
@@ -264,7 +275,7 @@ async function loadMine() {
   const c = ck(key); if (c) { data = c.data || {}; pays = c.pays || {}; sales = c.sales || {}; grid = c.grid || null; drawTabs(); drawMonth(); }
   else { data = {}; pays = {}; sales = {}; grid = null; drawTabs(); $('mt').textContent = '2. Работы за ' + mlabel(cur).toLowerCase(); $('vEmp').classList.add('ld'); }
   try {
-    const j = target ? await api('adminEmployeeMonths', { phone: target }) : await api('myMonths');
+    const j = target ? await api(S.role === 'head' ? 'headEmployee' : 'adminEmployeeMonths', { phone: target }) : await api('myMonths');
     if (timer) return;
     await queue;
     if (timer) return;
@@ -297,7 +308,7 @@ const num = v => Number(String(v).replace(/\s/g, '').replace(',', '.')) || 0;
 const pct = (t, p) => t > 0 ? Math.min(100, Math.round(p / t * 100)) : 0;
 const bar = (t, p) => `<div class="prog"><i style="width:${pct(t, p)}%"></i></div>`;
 function total() {
-  const tw = (data[cur] || []).reduce((s, r) => s + num(r.a), 0), ts = grid ? calcS(curS(), grid).total : 0, t = tw + ts, ps = pays[cur] || [], paid = ps.reduce((s, p) => s + p.a, 0), done = t > 0 && paid >= t;
+  const tw = (data[cur] || []).reduce((s, r) => s + num(r.a), 0), ts = grid ? calcS(curS(), gridM(cur)).total : 0, t = tw + ts, ps = pays[cur] || [], paid = ps.reduce((s, p) => s + p.a, 0), done = t > 0 && paid >= t;
   $('pay').innerHTML = `<h2>Расчёт за месяц</h2><div class="big">${rub(t)}</div>${bar(t, paid)}
     <div class="st"><div><small>Выплачено · ${pct(t, paid)}%</small><b class="ok">${rub(paid)}</b></div><div><small>Осталось выплатить</small><b>${done ? 'всё выплачено ✓' : rub(t - paid)}</b></div></div>` +
     (grid ? `<div class="pl"><div><span>Продажи</span><b>${rub(ts)}</b></div><div><span>Другие должности</span><b>${rub(tw)}</b></div></div>` : '') + (ps.length ? `<div class="pl">${ps.map(p => `<div><span>${esc(p.d)}${p.n ? ' · ' + esc(p.n) : ''}</span><b>${rub(p.a)}</b></div>`).join('')}</div>` : '');
@@ -318,6 +329,7 @@ function calcS(s, g) {
   return { rev, adj, i, base, pc, part, km, co, cp, comp, bonus, total: base + part + comp + bonus + adj };
 }
 const blankS = () => ({ adj: '', company: '', kpi: ['', '', ''], cats: CATS.map(() => ({ w: ['', '', '', ''], rev: '' })) });
+const gridM = m => grid === 'KM' && m < '2026-08' ? 'A' : grid;
 const curS = () => sales[cur] || (sales[cur] = blankS());
 function drawSales() {
   $('seg').classList.toggle('hide', !grid);
@@ -328,7 +340,7 @@ function drawSales() {
   $('scats').innerHTML = '<div class="sh r5"><span>1 нед.</span><span>2 нед.</span><span>3 нед.</span><span>4 нед.</span><span>Выручка, ₽</span></div>' + CATS.map(([n, p], i) => `<div class="cat" id="cat${i}"><div class="ch"><b>${n}</b><span class="mu" id="pl${i}"></span></div>${p ? `<div class="prog"><i id="pb${i}" style="width:0"></i></div>` : ''}
     <div class="r5">${[0, 1, 2, 3].map(k => `<input aria-label="${n}, ${k + 1} неделя, шт." data-c="${i}" data-w="${k}" inputmode="numeric" placeholder="0" value="${esc(d.cats[i].w[k])}">`).join('')}<input class="rv" aria-label="${n}, выручка за месяц, ₽" data-c="${i}" data-r="1" inputmode="decimal" placeholder="0" value="${esc(d.cats[i].rev)}"></div></div>`).join('');
   $('sadj').value = d.adj; $('sco').value = d.company; [0, 1, 2].forEach(k => $('k' + k).value = d.kpi[k]);
-  $('skm').classList.toggle('hide', grid !== 'KM');
+  $('skm').classList.toggle('hide', gridM(cur) !== 'KM');
   document.querySelectorAll('#vSales input').forEach(inp => inp.disabled = lk);
   document.querySelectorAll('#scats input').forEach(inp => inp.oninput = () => { const c = d.cats[+inp.dataset.c]; if (inp.dataset.r) c.rev = inp.value; else c.w[+inp.dataset.w] = inp.value; sEdit(); });
   $('sadj').oninput = () => { d.adj = $('sadj').value; sEdit(); }; $('sco').oninput = () => { d.company = $('sco').value; sEdit(); };
@@ -338,7 +350,7 @@ function drawSales() {
 const sEdit = () => { updSales(); total(); dirty(); };
 function updSales() {
   if (!grid) return;
-  const d = curS(), c = calcS(d, grid), list = TIERS.A, top = list[list.length - 1][0], prev = c.i ? list[c.i - 1][0] : 0;
+  const d = curS(), c = calcS(d, gridM(cur)), list = TIERS.A, top = list[list.length - 1][0], prev = c.i ? list[c.i - 1][0] : 0;
   $('stot').textContent = rub(c.total); $('srev').textContent = rub(c.rev); $('slvl').textContent = `${c.i + 1} из ${list.length}`;
   $('slp').style.width = (c.rev >= top ? 100 : Math.max(0, Math.min(100, (c.rev - prev) / (list[c.i][0] - prev) * 100))) + '%';
   $('snx').innerHTML = c.rev >= top ? 'Выше последнего уровня, применена максимальная ставка.' : `До следующего уровня ещё <b>${rub(list[c.i][0] - c.rev)}</b> выручки`;
@@ -365,7 +377,7 @@ function dirty() { $('st').textContent = 'Сохранение…'; $('st').clas
 let queue = Promise.resolve();
 function flush() {
   if (!timer) return queue; clearTimeout(timer); timer = null;
-  const month = cur, phone = target || undefined, rows = data[month].map(r => ({ p: r.p, w: r.w, a: num(r.a) })), sl = grid ? JSON.parse(JSON.stringify(curS())) : null;
+  const month = cur, phone = target || undefined, rows = S.role === 'head' && target ? null : data[month].map(r => ({ p: r.p, w: r.w, a: num(r.a) })), sl = grid ? JSON.parse(JSON.stringify(curS())) : null;
   cs('m' + (target || S.phone), { data, pays, sales, grid });
   const go = () => doSave(month, phone, rows, sl);
   queue = queue.then(go, go);
@@ -373,7 +385,7 @@ function flush() {
 }
 async function doSave(month, phone, rows, sl) {
   try {
-    let j = await api('saveMonth', { month, phone, rows });
+    let j = rows ? await api('saveMonth', { month, phone, rows }) : {};
     if (!j.error && sl) j = await api('saveSales', { month, phone, sales: sl });
     $('st').textContent = j.error ? 'Не сохранено: ' + j.error : 'Сохранено ✓'; $('st').className = j.error ? 'er' : 'ok';
   } catch (e) { $('st').textContent = 'Не сохранено: ' + e.message; $('st').className = 'er'; }
@@ -409,8 +421,20 @@ function drawSum(j) {
   $('alist').querySelectorAll('[data-delpay]').forEach(b => b.onclick = async () => { await api('adminDelPay', { id: b.dataset.delpay }); loadSum(); });
   $('alist').querySelectorAll('[data-edit]').forEach(b => b.onclick = () => { target = b.dataset.edit; tname = b.dataset.name; cur = sel.value; view2(); });
 }
-function view2() { document.querySelectorAll('#atabs button').forEach(b => b.classList.remove('on')); $('vEmp').classList.remove('hide'); $('vSum').classList.add('hide'); $('vUsr').classList.add('hide'); $('imp').classList.remove('hide'); $('impn').textContent = tname; $('ttl').textContent = tname; loadMine(); }
-$('impb').onclick = () => view('sum');
+async function loadDep() {
+  const sel = $('dm'); if (!sel.options.length) { sel.innerHTML = monthList().map(m => `<option value="${m}">${mlabel(m)}</option>`).join(''); sel.value = nowM(); sel.onchange = loadDep; $('dprev').onclick = () => step(sel, 1); $('dnext').onclick = () => step(sel, -1); }
+  const key = 'd' + sel.value, c = ck(key);
+  if (c) drawDep(c); else $('dlist').innerHTML = '<span class="mu">Загружаю данные…</span>';
+  const j = await api('headMonth', { month: sel.value }); cs(key, j); drawDep(j);
+}
+function drawDep(j) {
+  const e = j.employees || [], gr = e.reduce((s, x) => s + x.rev, 0), gt = e.reduce((s, x) => s + x.total, 0);
+  $('dtot').innerHTML = `<div class="big">${rub(gr)}</div><div class="st"><div><small>Менеджеров</small><b>${e.length}</b></div><div><small>ЗП менеджеров</small><b>${rub(gt)}</b></div></div>`;
+  $('dlist').innerHTML = e.length ? e.map(x => `<button class="dr" data-ph="${x.phone}" data-name="${esc(x.name)}"><div><b>${esc(x.name)}</b><small>выручка ${rub(x.rev)}</small></div><div><b>${rub(x.total)}</b><small>ЗП</small></div></button>`).join('') : '<span class="mu">Менеджеров пока нет</span>';
+  $('dlist').querySelectorAll('.dr').forEach(b => b.onclick = () => { target = b.dataset.ph; tname = b.dataset.name; cur = $('dm').value; seg = 's'; view2(); });
+}
+function view2() { $('vDep').classList.add('hide'); if (S.role === 'head') $('vEmp').classList.add('sub'); document.querySelectorAll('#atabs button').forEach(b => b.classList.remove('on')); $('vEmp').classList.remove('hide'); $('vSum').classList.add('hide'); $('vUsr').classList.add('hide'); $('imp').classList.remove('hide'); $('impn').textContent = tname; $('ttl').textContent = tname; loadMine(); }
+$('impb').onclick = () => view(S.role === 'head' ? 'dep' : 'sum');
 function ask(text, yes) {
   $('dt').textContent = text; $('dyes').textContent = yes || 'Да, закрыть'; $('dlg').classList.remove('hide');
   return new Promise(res => { const done = v => { $('dlg').classList.add('hide'); res(v); }; $('dyes').onclick = () => done(true); $('dno').onclick = () => done(false); $('dlg').onclick = e => { if (e.target === $('dlg')) done(false); }; });

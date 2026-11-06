@@ -130,7 +130,7 @@ details[open] .chev::after{transform:rotate(-135deg);top:9px}
     <div class="mnav"><button class="g" id="mprev" aria-label="Предыдущий месяц">‹</button><select id="msel" aria-label="Месяц"></select><button class="g" id="mnext" aria-label="Следующий месяц">›</button></div>
     <div id="seg" class="hide"><button data-t="s" class="on">Продажи</button><button data-t="w">Другие должности</button></div>
     <div id="vSales" class="hide">
-      <div class="card"><h2>Расчёт продаж</h2><div class="big" id="stot">0 ₽</div>
+      <div class="card"><h2 id="sh">Расчёт продаж</h2><div class="big" id="stot">0 ₽</div>
         <div class="st"><div><small>Выручка за месяц</small><b id="srev">0 ₽</b></div><div><small>Уровень ставки</small><b id="slvl"></b></div></div>
         <div class="prog" style="margin:12px 0 6px"><i id="slp" style="width:0"></i></div><div class="nx" id="snx" style="margin:0"></div></div>
       <div class="card"><h2>Продажи по тарифам</h2><p class="mu" style="margin:-4px 0 12px"><b>Шт.</b> по неделям месяца. <b>Выручка</b> — вся сумма по тарифу за месяц. На ЗП влияет только выручка.</p><div id="scats"></div></div>
@@ -178,6 +178,7 @@ details[open] .chev::after{transform:rotate(-135deg);top:9px}
     <label class="fl" for="un">Имя и фамилия</label><input id="un" placeholder="Например, Анна Петрова" autocomplete="off">
     <label class="fl" for="up">Телефон</label><input id="up" type="tel" placeholder="+7 900 000-00-00" autocomplete="off">
     <label class="fl" for="ur">Выберите роль</label><select id="ur"><option value="user">Сотрудник</option><option value="manager">Менеджер продаж</option><option value="head">Руководитель отдела продаж</option><option value="admin">Администратор</option></select>
+    <div id="urw" class="hide"><label class="fl" for="urt">Ставка</label><select id="urt"><option value="A">Младший менеджер (ММП)</option><option value="B">Менеджер-стажёр</option><option value="KM">Ключевой менеджер (КМП)</option></select></div>
     <label class="fl" for="upw" id="upl">Временный пароль (от 6 знаков)</label><input id="upw" placeholder="Придумайте пароль" autocomplete="off">
     <p id="um" class="er" style="margin:10px 0 0"></p>
     <div class="row" style="margin-top:14px"><button class="g" id="uc">Отмена</button><button id="us">Сохранить</button></div>
@@ -317,12 +318,13 @@ function total() {
 const CATS = [['Посты', 11], ['Долгосрок', 1], ['Тариф месяц', 2], ['Подборка', 6], ['Бизн.подп', 1], ['Партнерка', 1], ['Прочее', null]];
 const TIERS = {
   A: [[25000,5000,0],[50000,7500,3],[75000,10000,6],[100000,13000,8],[130000,15000,9],[160000,17000,10],[200000,25000,12],[230000,30000,13],[270000,35000,14],[300000,40000,15],[400000,45000,16],[500000,50000,18]],
+  B: [[25000,4000,0],[50000,6000,3],[75000,8000,6],[100000,10400,8],[130000,12000,9],[160000,13600,10],[200000,20000,12],[230000,24000,13],[270000,28000,14],[300000,32000,15],[400000,36000,16],[500000,40000,18]],
   KM: [[900000,50000,0],[1000000,50000,0.5],[1200000,50000,1],[1300000,50000,2]]
 };
 const KPI_W = [.5, .3, .2], OKLAD_KM = 50000, KPI_SHARE = .4;
 const tierFor = (rev, l) => { for (let i = 0; i < l.length; i++) if (rev <= l[i][0]) return i; return l.length - 1; };
 function calcS(s, g) {
-  const rev = s.cats.reduce((a, c) => a + num(c.rev), 0), adj = num(s.adj), i = tierFor(rev, TIERS.A), t = TIERS.A[i], km = g === 'KM';
+  const rev = s.cats.reduce((a, c) => a + num(c.rev), 0), adj = num(s.adj), i = tierFor(rev, g === 'B' ? TIERS.B : TIERS.A), t = (g === 'B' ? TIERS.B : TIERS.A)[i], km = g === 'KM';
   const base = km ? OKLAD_KM : t[1], pc = t[2], part = rev * pc / 100;
   let co = 0, cp = 0, comp = 0, bonus = 0;
   if (km) { co = num(s.company); cp = TIERS.KM[tierFor(co, TIERS.KM)][2]; comp = co * cp / 100; bonus = OKLAD_KM * KPI_SHARE * KPI_W.reduce((a, w, k) => a + w * Math.min(100, Math.max(0, num(s.kpi[k]))) / 100, 0); }
@@ -350,7 +352,8 @@ function drawSales() {
 const sEdit = () => { updSales(); total(); dirty(); };
 function updSales() {
   if (!grid) return;
-  const d = curS(), c = calcS(d, gridM(cur)), list = TIERS.A, top = list[list.length - 1][0], prev = c.i ? list[c.i - 1][0] : 0;
+  const d = curS(), c = calcS(d, gridM(cur)), list = gridM(cur) === 'B' ? TIERS.B : TIERS.A, top = list[list.length - 1][0], prev = c.i ? list[c.i - 1][0] : 0;
+  $('sh').textContent = 'Расчёт продаж · ' + ({ KM: 'КМП', A: 'ММП', B: 'стажёр' }[gridM(cur)] || '');
   $('stot').textContent = rub(c.total); $('srev').textContent = rub(c.rev); $('slvl').textContent = `${c.i + 1} из ${list.length}`;
   $('slp').style.width = (c.rev >= top ? 100 : Math.max(0, Math.min(100, (c.rev - prev) / (list[c.i][0] - prev) * 100))) + '%';
   $('snx').innerHTML = c.rev >= top ? 'Выше последнего уровня, применена максимальная ставка.' : `До следующего уровня ещё <b>${rub(list[c.i][0] - c.rev)}</b> выручки`;
@@ -444,7 +447,7 @@ async function loadUsers() {
   const j = await api('adminUsers');
   const RL = { user: 'Сотрудник', manager: 'Менеджер продаж', head: 'Руководитель отдела продаж', admin: 'Администратор' };
   ULIST = j.users || [];
-  $('ulist').innerHTML = ULIST.map(u => `<div class="ur${u.active ? '' : ' off'}" data-edit="${u.phone}"><div><b>${esc(u.name)}</b><div class="mu">${RL[u.role] || 'Сотрудник'}${u.active ? '' : ' · доступ отключён'}</div></div>
+  $('ulist').innerHTML = ULIST.map(u => `<div class="ur${u.active ? '' : ' off'}" data-edit="${u.phone}"><div><b>${esc(u.name)}</b><div class="mu">${RL[u.role] || 'Сотрудник'}${['manager', 'head'].includes(u.role) ? ' · ' + ({ KM: 'КМП', A: 'ММП', B: 'стажёр' }[u.rate] || (u.role === 'head' ? 'КМП' : 'ММП')) : ''}${u.active ? '' : ' · доступ отключён'}</div></div>
     ${u.role === 'admin' ? '' : `<button class="sw${u.active ? ' on' : ''}" role="switch" aria-checked="${u.active}" aria-label="Доступ сотрудника" data-act="${u.phone}" data-on="${u.active}"><i></i></button>`}</div>`).join('');
   $('ulist').querySelectorAll('[data-edit]').forEach(r => r.onclick = e => { if (e.target.closest('.sw')) return; openSheet(ULIST.find(u => u.phone === r.dataset.edit)); });
   $('ulist').querySelectorAll('[data-act]').forEach(b => b.onclick = async () => {
@@ -458,11 +461,13 @@ let ULIST = [];
 function openSheet(u) {
   $('ut').textContent = u ? 'Сотрудник' : 'Новый сотрудник';
   $('un').value = u ? u.name : ''; $('up').value = u ? '+' + u.phone : ''; $('up').readOnly = !!u; $('upw').value = ''; $('um').textContent = '';
-  $('ur').value = u ? u.role : 'user'; $('ur').disabled = !!u && u.role === 'admin';
+  $('ur').value = u ? u.role : 'user'; $('ur').disabled = !!u && u.role === 'admin'; $('urt').value = (u && u.rate) || (u && u.role === 'head' ? 'KM' : 'A'); rateVis();
   $('upl').textContent = u ? 'Новый пароль (только если нужно сбросить)' : 'Временный пароль (от 6 знаков)';
   $('upw').placeholder = u ? 'Оставьте пустым, чтобы не менять' : 'Придумайте пароль';
   $('usheet').classList.remove('hide'); if (!u) setTimeout(() => $('un').focus(), 50);
 }
+const rateVis = () => $('urw').classList.toggle('hide', !['manager', 'head'].includes($('ur').value));
+$('ur').onchange = () => { if (!$('urw').classList.contains('hide') || ['manager', 'head'].includes($('ur').value)) $('urt').value = $('ur').value === 'head' ? 'KM' : 'A'; rateVis(); };
 $('addu').onclick = () => openSheet(null);
 $('uc').onclick = () => $('usheet').classList.add('hide');
 $('usheet').onclick = e => { if (e.target === $('usheet')) $('usheet').classList.add('hide'); };
@@ -470,7 +475,7 @@ $('us').onclick = async () => {
   if ($('us').disabled) return;
   $('us').disabled = true; $('us').innerHTML = '<span class="spin"></span>Сохраняю…';
   try {
-    const j = await api('adminSaveUser', { name: $('un').value, phone: $('up').value, password: $('upw').value, role: $('ur').value });
+    const j = await api('adminSaveUser', { name: $('un').value, phone: $('up').value, password: $('upw').value, role: $('ur').value, rate: ['manager', 'head'].includes($('ur').value) ? $('urt').value : '' });
     if (j.ok) { $('usheet').classList.add('hide'); loadUsers(); }
     else { $('um').textContent = { phone: 'Неверный номер телефона', short: 'Пароль короче 6 знаков', admin: 'Роль администратора менять нельзя' }[j.error] || 'Не удалось сохранить'; }
   } finally { $('us').disabled = false; $('us').textContent = 'Сохранить'; }

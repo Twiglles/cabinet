@@ -11,7 +11,8 @@ function sh(name, head) {
   if (!s) { s = ss.insertSheet(name); s.appendRow(head); s.setFrozenRows(1); }
   return s;
 }
-var USERS_H = ['phone', 'name', 'role', 'salt', 'hash', 'active', 'must'];
+var USERS_H = ['phone', 'name', 'role', 'salt', 'hash', 'active', 'must', 'rate'];
+var RATES = ['A', 'B', 'KM'];
 var ROWS_H = ['phone', 'month', 'project', 'work', 'amount', 'updatedAt'];
 var PAY_H = ['id', 'phone', 'month', 'amount', 'date', 'note'];
 function paysSheet() { return sh('Выплаты', PAY_H); }
@@ -21,16 +22,17 @@ var ROLES = ['user', 'manager', 'head', 'admin'];
 var SALES_H = ['phone', 'month', 'json', 'total', 'updatedAt'];
 var TIERS = {
   A: [[25000, 5000, 0], [50000, 7500, 3], [75000, 10000, 6], [100000, 13000, 8], [130000, 15000, 9], [160000, 17000, 10], [200000, 25000, 12], [230000, 30000, 13], [270000, 35000, 14], [300000, 40000, 15], [400000, 45000, 16], [500000, 50000, 18]],
+  B: [[25000, 4000, 0], [50000, 6000, 3], [75000, 8000, 6], [100000, 10400, 8], [130000, 12000, 9], [160000, 13600, 10], [200000, 20000, 12], [230000, 24000, 13], [270000, 28000, 14], [300000, 32000, 15], [400000, 36000, 16], [500000, 40000, 18]],
   KM: [[900000, 50000, 0], [1000000, 50000, 0.5], [1200000, 50000, 1], [1300000, 50000, 2]]
 };
 var OKLAD_KM = 50000, KPI_SHARE = 0.4, KPI_W = [0.5, 0.3, 0.2];
 var KM_FROM = '2026-08';
-function gridFor(role, month) { var g = role === 'head' ? 'KM' : role === 'manager' ? 'A' : null; if (g === 'KM' && month && month < KM_FROM) g = 'A'; return g; }
+function gridFor(role, month, rate) { var g = role === 'head' || role === 'manager' ? (RATES.indexOf(rate) >= 0 ? rate : role === 'head' ? 'KM' : 'A') : null; if (g === 'KM' && month && month < KM_FROM) g = 'A'; return g; }
 function snum(v) { return Number(String(v == null ? '' : v).replace(/\s/g, '').replace(',', '.')) || 0; }
 function tierFor(rev, list) { for (var i = 0; i < list.length; i++) if (rev <= list[i][0]) return i; return list.length - 1; }
 function calcSales(s, grid) {
   var rev = 0; (s.cats || []).forEach(function (c) { rev += snum(c.rev); });
-  var adj = snum(s.adj), i = tierFor(rev, TIERS.A), t = TIERS.A[i];
+  var adj = snum(s.adj), L = grid === 'B' ? TIERS.B : TIERS.A, i = tierFor(rev, L), t = L[i];
   var base = grid === 'KM' ? OKLAD_KM : t[1], sum = base + rev * t[2] / 100, extra = 0;
   if (grid === 'KM') {
     var co = snum(s.company), cp = TIERS.KM[tierFor(co, TIERS.KM)][2], kp = 0;
@@ -49,16 +51,16 @@ function salesMap(phone) {
   });
   return res;
 }
-function myData(phone, role) {
-  var g = gridFor(role), res = { data: myMonths(phone), pays: myPays(phone), grid: g };
+function myData(phone, role, rate) {
+  var g = gridFor(role, '', rate), res = { data: myMonths(phone), pays: myPays(phone), grid: g };
   if (g) res.sales = salesMap(phone);
   return res;
 }
 function saveSales(me, b) {
-  var phone = me.phone, role = me.role, month = String(b.month || '');
-  if ((me.role === 'admin' || me.role === 'head') && b.phone) { phone = normPhone(b.phone); var tu = findUser(phone); role = tu && tu.role; if (me.role === 'head' && role !== 'manager') return { error: 'forbidden' }; }
+  var phone = me.phone, role = me.role, rate = me.rate, month = String(b.month || '');
+  if ((me.role === 'admin' || me.role === 'head') && b.phone) { phone = normPhone(b.phone); var tu = findUser(phone); role = tu && tu.role; rate = tu && tu.rate; if (me.role === 'head' && role !== 'manager') return { error: 'forbidden' }; }
   if (!/^\d{4}-\d{2}$/.test(month)) return { error: 'bad month' };
-  var g = gridFor(role, month); if (!g) return { error: 'nosales' };
+  var g = gridFor(role, month, rate); if (!g) return { error: 'nosales' };
   var x = b.sales || {}, cl = { adj: String(x.adj || '').slice(0, 20), company: String(x.company || '').slice(0, 20), kpi: [0, 1, 2].map(function (k) { return String((x.kpi || [])[k] || '').slice(0, 6); }), cats: [] };
   for (var i = 0; i < 7; i++) { var c = (x.cats || [])[i] || {}; cl.cats.push({ w: [0, 1, 2, 3].map(function (k) { return String((c.w || [])[k] || '').slice(0, 8); }), rev: String(c.rev || '').slice(0, 15) }); }
   var tot = calcSales(cl, g).total, s = salesSheet(), n = s.getLastRow(), row = 0;
@@ -75,7 +77,12 @@ function delSessions(phone, h, keep) {
   var v = s.getRange(2, 1, n - 1, 3).getValues(), now = Date.now();
   for (var i = v.length - 1; i >= 0; i--) if (String(v[i][0]) !== keep && (String(v[i][1]) === phone && !h || String(v[i][0]) === h || Number(v[i][2]) < now)) s.deleteRow(i + 2);
 }
-function users() { return sh('Сотрудники', USERS_H); }
+function users() {
+  var s = sh('Сотрудники', USERS_H);
+  if (s.getMaxColumns() < 8) s.insertColumnsAfter(s.getMaxColumns(), 8 - s.getMaxColumns());
+  if (s.getRange(1, 8).getValue() !== 'rate') s.getRange(1, 8).setValue('rate');
+  return s;
+}
 function rows() { return sh('Записи', ROWS_H); }
 function ms(v) { return v instanceof Date ? Utilities.formatDate(v, SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone(), 'yyyy-MM') : String(v); }
 
@@ -92,15 +99,15 @@ function hash(salt, pass) {
 function findUser(phone) {
   var s = users(), n = s.getLastRow();
   if (n < 2) return null;
-  var v = s.getRange(2, 1, n - 1, 7).getValues();
-  for (var i = 0; i < v.length; i++) if (String(v[i][0]) === phone) return { row: i + 2, phone: String(v[i][0]), name: v[i][1], role: v[i][2], salt: v[i][3], hash: v[i][4], active: v[i][5] !== false && v[i][5] !== 'FALSE', must: v[i][6] === true || v[i][6] === 'TRUE' };
+  var v = s.getRange(2, 1, n - 1, 8).getValues();
+  for (var i = 0; i < v.length; i++) if (String(v[i][0]) === phone) return { row: i + 2, phone: String(v[i][0]), name: v[i][1], role: v[i][2], rate: String(v[i][7] || ''), salt: v[i][3], hash: v[i][4], active: v[i][5] !== false && v[i][5] !== 'FALSE', must: v[i][6] === true || v[i][6] === 'TRUE' };
   return null;
 }
 function putUser(phone, name, role, pass, must, keep) {
   CacheService.getScriptCache().remove('u_' + phone);
   delSessions(phone, '', keep);
   var salt = Utilities.getUuid(), h = hash(salt, pass), u = findUser(phone), s = users();
-  s.getRange(1, 7).setValue('must');
+  s.getRange(1, 7, 1, 2).setValues([['must', 'rate']]);
   s.getRange(2, 3, Math.max(1, s.getMaxRows() - 1), 1).setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(ROLES, true).setAllowInvalid(false).build());
   if (u) s.getRange(u.row, 1, 1, 7).setValues([[phone, name || u.name, role || u.role, salt, h, true, !!must]]);
   else { s.appendRow([phone, name, role || 'user', salt, h, true, !!must]); s.getRange(s.getLastRow(), 1).setNumberFormat('@').setValue(phone); }
@@ -126,7 +133,7 @@ function doPost(e) {
     if (me.must && b.action !== 'changePassword' && b.action !== 'logout') return out({ error: 'must' });
     switch (b.action) {
       case 'logout': return out(logout(b));
-      case 'myMonths': return out(myData(me.phone, me.role));
+      case 'myMonths': return out(myData(me.phone, me.role, me.rate));
       case 'saveMonth': return out(saveMonth(me, b));
       case 'saveSales': return out(saveSales(me, b));
       case 'changePassword': return out(changePassword(me, b));
@@ -137,11 +144,12 @@ function doPost(e) {
       case 'adminAddPay': return admin(me) || out(adminAddPay(b));
       case 'adminDelPay': return admin(me) || out(adminDelPay(b));
       case 'adminSaveUser': return admin(me) || out(adminSaveUser(b));
-      case 'adminEmployeeMonths': return admin(me) || out(myData(normPhone(b.phone), (findUser(normPhone(b.phone)) || {}).role));
+      case 'adminEmployeeMonths': return admin(me) || out(adminEmp(normPhone(b.phone)));
     }
     return out({ error: 'bad action' });
   } finally { if (lock) lock.releaseLock(); }
 }
+function adminEmp(phone) { var u = findUser(phone) || {}; return myData(phone, u.role, u.rate); }
 function head(me) { return me.role === 'head' ? null : out({ error: 'forbidden' }); }
 function headMonth(month) {
   var by = {}, res = [];
@@ -160,7 +168,7 @@ function headMonth(month) {
 function headEmployee(phone) {
   var u = findUser(phone);
   if (!u || u.role !== 'manager') return { error: 'forbidden' };
-  return { data: {}, pays: {}, sales: salesMap(phone), grid: 'A' };
+  return { data: {}, pays: {}, sales: salesMap(phone), grid: gridFor(u.role, '', u.rate) };
 }
 function admin(me) { return me.role === 'admin' ? null : out({ error: 'forbidden' }); }
 
@@ -180,7 +188,7 @@ function login(b) {
     ss.getRange(r, 1, 1, 3).setNumberFormat('@').setValues([[tokHash(t), phone, String(Date.now() + REMEMBER_DAYS * 86400000)]]);
   }
   var res = { token: t, name: u.name, role: u.role, phone: phone, editPast: EDIT_PAST_MONTHS, must: u.must };
-  if (!u.must) { var md = myData(phone, u.role); res.data = md.data; res.pays = md.pays; res.sales = md.sales; res.grid = md.grid; }
+  if (!u.must) { var md = myData(phone, u.role, u.rate); res.data = md.data; res.pays = md.pays; res.sales = md.sales; res.grid = md.grid; }
   if (u.role === 'admin' && !u.must) { res.sumMonth = curMonth(); res.sum = adminMonth(res.sumMonth); }
   return res;
 }
@@ -199,7 +207,7 @@ function auth(t) {
   if (j) return JSON.parse(j);
   var u = findUser(phone);
   if (!u || !u.active) return null;
-  var m = { phone: u.phone, name: u.name, role: u.role, must: u.must };
+  var m = { phone: u.phone, name: u.name, role: u.role, rate: u.rate, must: u.must };
   c.put('u_' + phone, JSON.stringify(m), SESSION_SEC);
   return m;
 }
@@ -276,7 +284,7 @@ function changePassword(me, b) {
 function listUsers() {
   var s = users(), n = s.getLastRow();
   if (n < 2) return [];
-  return s.getRange(2, 1, n - 1, 6).getValues().map(function (r) { return { phone: String(r[0]), name: r[1], role: r[2], active: r[5] !== false && r[5] !== 'FALSE' }; });
+  return s.getRange(2, 1, n - 1, 8).getValues().map(function (r) { return { phone: String(r[0]), name: r[1], role: r[2], rate: String(r[7] || ''), active: r[5] !== false && r[5] !== 'FALSE' }; });
 }
 function adminMonth(month) {
   var us = listUsers(), by = {};
@@ -310,16 +318,18 @@ function adminSaveUser(b) {
     CacheService.getScriptCache().remove('u_' + phone);
     return { ok: true };
   }
-  var role = ROLES.indexOf(b.role) >= 0 ? b.role : (u && u.role) || 'user';
+  var role = ROLES.indexOf(b.role) >= 0 ? b.role : (u && u.role) || 'user', rate = RATES.indexOf(b.rate) >= 0 ? b.rate : '';
   if (u && u.role === 'admin' && role !== 'admin') return { error: 'admin' };
   if (!u && (!b.password || String(b.password).length < 6)) return { error: 'short' };
   if (u && !b.password) {
     users().getRange(u.row, 2, 1, 2).setValues([[b.name || u.name, role]]);
+    users().getRange(u.row, 8).setValue(rate);
     CacheService.getScriptCache().remove('u_' + phone);
     return { ok: true };
   }
   if (String(b.password).length < 6) return { error: 'short' };
   putUser(phone, b.name || (u && u.name) || '', role, String(b.password), true);
+  users().getRange(findUser(phone).row, 8).setValue(rate);
   return { ok: true };
 }
 
@@ -346,7 +356,7 @@ function importZp() {
     var cl = { adj: String(d.adj || ''), company: String(d.company || ''), kpi: [0, 1, 2].map(function (i) { return String((d.kpi || [])[i] || ''); }), cats: d.cats.slice(0, 7).map(function (c) { return { w: [0, 1, 2, 3].map(function (i) { return String((c.w || [])[i] || ''); }), rev: String(c.rev || '') }; }) };
     var used = cl.cats.some(function (c) { return snum(c.rev) || c.w.some(snum); }) || snum(cl.adj) || snum(cl.company);
     if (!used) return;
-    add.push([u.phone, q[1], JSON.stringify(cl), calcSales(cl, gridFor(u.role, q[1])).total, now]);
+    add.push([u.phone, q[1], JSON.stringify(cl), calcSales(cl, gridFor(u.role, q[1], u.rate)).total, now]);
     cnt[u.name] = (cnt[u.name] || 0) + 1;
   });
   if (add.length) {

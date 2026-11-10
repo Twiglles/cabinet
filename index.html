@@ -40,7 +40,7 @@ details{border-top:1px solid var(--bd);padding:12px 0}summary{cursor:pointer;dis
 .fl{display:block;font:600 13px Montserrat,system-ui,sans-serif;color:var(--mu);margin:12px 0 6px}
 .sheet .box{max-height:92vh;overflow:auto}.sheet h3{margin:0 0 4px;font:800 20px Montserrat,system-ui,sans-serif}.sheet .row>*{min-width:0}
 @media(max-width:560px){.dlg.sheet{align-items:flex-end;padding:0}.dlg.sheet .box{max-width:none;border-radius:16px 16px 0 0;padding:20px 16px calc(20px + env(safe-area-inset-bottom))}}
-.imp{background:#fbeaea;border:1px solid rgba(140,14,14,.25);border-radius:12px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;font-size:14px}.imp.hide{display:none}.imp button{padding:8px 12px;font-size:13px}
+.imp{position:sticky;top:58px;z-index:9;background:#fbeaea;border:1px solid rgba(140,14,14,.25);border-radius:12px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;font-size:14px}.imp.hide{display:none}.imp button{padding:8px 12px;font-size:13px}
 .spin{display:inline-block;width:14px;height:14px;margin-right:10px;vertical-align:-2px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
 .rem{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--mu);cursor:pointer}.rem input{width:20px;min-height:20px;height:20px;padding:0;accent-color:var(--ac);flex:none}
 .dlg{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px}.dlg.hide{display:none}
@@ -124,7 +124,7 @@ details[open] .chev::after{transform:rotate(-135deg);top:9px}
   <div id="err" class="er"></div>
   <div id="atabs" class="tabs hide"><button data-v="sum" data-r="admin" class="on">Все зарплаты</button><button data-v="usr" data-r="admin">Сотрудники</button><button data-v="me" data-r="admin head">Моя оплата</button><button data-v="dep" data-r="head">Отдел</button></div>
 
-  <div id="imp" class="imp hide"><span>Вы смотрите кабинет сотрудника: <b id="impn"></b></span><button class="g" id="impb">← Назад к списку</button></div>
+  <div id="imp" class="imp hide"><span>Так выглядит кабинет сотрудника <b id="impn"></b></span><button class="g" id="impb">← Назад к списку</button></div>
   <div id="vEmp">
     <h2 class="step">1. Выберите месяц</h2>
     <div class="mnav"><button class="g" id="mprev" aria-label="Предыдущий месяц">‹</button><select id="msel" aria-label="Месяц"></select><button class="g" id="mnext" aria-label="Следующий месяц">›</button></div>
@@ -205,13 +205,19 @@ async function api(action, body = {}) {
 }
 function save() { try { (S.keep ? localStorage : sessionStorage).setItem('s', JSON.stringify(S)); } catch (e) {} }
 function logout() { if (S) api('logout').catch(() => {}); S = null; try { sessionStorage.clear(); localStorage.removeItem('s'); } catch (e) {} show(); }
+let pv = null;
+const isSub = () => !!target && (pv ? target !== pv.phone : S.role === 'head');
+function setTabs(role) {
+  const tb = [...document.querySelectorAll('#atabs button')].filter(b => b.dataset.r.split(' ').includes(role));
+  document.querySelectorAll('#atabs button').forEach(b => b.classList.toggle('hide', !tb.includes(b))); $('atabs').style.gridTemplateColumns = 'repeat(' + tb.length + ',1fr)'; $('atabs').classList.toggle('hide', !tb.length);
+}
+function startPreview(phone, name, role) { if (role === 'admin') role = 'user'; pv = { phone, name, role }; setTabs(role); view(role === 'admin' ? 'sum' : 'me'); }
 function show() {
   const ok = S && !S.must;
   $('login').classList.toggle('hide', !!S); $('bar').classList.toggle('hide', !ok); $('app').classList.toggle('hide', !ok); $('setpw').classList.toggle('hide', !(S && S.must));
   if (!ok) return;
   $('who').textContent = S.name; 
-  const tb = [...document.querySelectorAll('#atabs button')].filter(b => b.dataset.r.split(' ').includes(S.role));
-  document.querySelectorAll('#atabs button').forEach(b => b.classList.toggle('hide', !tb.includes(b))); $('atabs').style.gridTemplateColumns = 'repeat(' + tb.length + ',1fr)'; $('atabs').classList.toggle('hide', !tb.length);
+  pv = null; setTabs(S.role);
   $('ttl').textContent = S.name;
   view(S.role === 'admin' ? 'sum' : 'me');
   $('role').textContent = { admin: 'Администратор', head: 'Руководитель отдела продаж', manager: 'Менеджер продаж' }[S.role] || 'Сотрудник';
@@ -255,11 +261,11 @@ $('pws').onclick = async () => {
 };
 document.querySelectorAll('#atabs button').forEach(b => b.onclick = () => view(b.dataset.v));
 function view(v) {
-  flush(); $('err').textContent = ''; $('imp').classList.add('hide'); $('ttl').textContent = S.name;
+  flush(); $('err').textContent = ''; $('imp').classList.toggle('hide', !pv); if (pv) { $('impn').textContent = pv.name; $('impb').textContent = 'Выйти из просмотра'; } $('ttl').textContent = pv ? pv.name : S.name;
   document.querySelectorAll('#atabs button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
-  $('vEmp').classList.remove('sub'); $('vDep').classList.toggle('hide', v !== 'dep');
+  target = pv ? pv.phone : null; $('vEmp').classList.remove('sub'); $('vDep').classList.toggle('hide', v !== 'dep');
   $('vEmp').classList.toggle('hide', v !== 'me'); $('vSum').classList.toggle('hide', v !== 'sum'); $('vUsr').classList.toggle('hide', v !== 'usr');
-  if (v === 'me') { target = null; loadMine(); } else if (v === 'sum') loadSum(); else if (v === 'dep') loadDep(); else loadUsers();
+  if (v === 'me') { target = pv ? pv.phone : null; loadMine(); } else if (v === 'sum') loadSum(); else if (v === 'dep') loadDep(); else loadUsers();
 }
 
 function monthList() {
@@ -276,7 +282,7 @@ async function loadMine() {
   const c = ck(key); if (c) { data = c.data || {}; pays = c.pays || {}; sales = c.sales || {}; grid = c.grid || null; drawTabs(); drawMonth(); }
   else { data = {}; pays = {}; sales = {}; grid = null; drawTabs(); $('mt').textContent = '2. Работы за ' + mlabel(cur).toLowerCase(); $('vEmp').classList.add('ld'); }
   try {
-    const j = target ? await api(S.role === 'head' ? 'headEmployee' : 'adminEmployeeMonths', { phone: target }) : await api('myMonths');
+    const j = target ? await api(S.role === 'head' && !pv ? 'headEmployee' : 'adminEmployeeMonths', { phone: target }) : await api('myMonths');
     if (timer) return;
     await queue;
     if (timer) return;
@@ -380,7 +386,7 @@ function dirty() { $('st').textContent = 'Сохранение…'; $('st').clas
 let queue = Promise.resolve();
 function flush() {
   if (!timer) return queue; clearTimeout(timer); timer = null;
-  const month = cur, phone = target || undefined, rows = S.role === 'head' && target ? null : data[month].map(r => ({ p: r.p, w: r.w, a: num(r.a) })), sl = grid ? JSON.parse(JSON.stringify(curS())) : null;
+  const month = cur, phone = target || undefined, rows = isSub() ? null : data[month].map(r => ({ p: r.p, w: r.w, a: num(r.a) })), sl = grid ? JSON.parse(JSON.stringify(curS())) : null;
   cs('m' + (target || S.phone), { data, pays, sales, grid });
   const go = () => doSave(month, phone, rows, sl);
   queue = queue.then(go, go);
@@ -414,7 +420,7 @@ function drawSum(j) {
     <div class="mu" style="margin-top:8px">Выплаты:</div>
     ${x.pays.map(p => `<div class="pr"><span>${esc(p.d)} — <b>${rub(p.a)}</b>${p.n ? ' · ' + esc(p.n) : ''}</span><button class="x" data-delpay="${esc(p.id)}">✕</button></div>`).join('')}
     <div class="row" style="margin-top:6px"><input data-pa="${x.phone}" inputmode="decimal" placeholder="Сумма выплаты"><input data-pd="${x.phone}" type="date" value="${new Date().toISOString().slice(0, 10)}"><input data-pn="${x.phone}" placeholder="Комментарий"><button data-addpay="${x.phone}">Выплатить</button></div>
-    <button class="g" data-edit="${x.phone}" data-name="${esc(x.name)}" style="margin-top:8px">Открыть кабинет сотрудника</button></details>`).join('') : '<span class="mu">Сотрудников пока нет</span>';
+    <button class="g" data-edit="${x.phone}" data-role="${esc(x.role)}" data-name="${esc(x.name)}" style="margin-top:8px">Открыть кабинет сотрудника</button></details>`).join('') : '<span class="mu">Сотрудников пока нет</span>';
   $('alist').querySelectorAll('[data-addpay]').forEach(b => b.onclick = async () => {
     const ph = b.dataset.addpay, q = k => $('alist').querySelector(`[data-${k}="${ph}"]`);
     const j = await api('adminAddPay', { phone: ph, month: sel.value, amount: q('pa').value, date: q('pd').value, note: q('pn').value });
@@ -422,7 +428,7 @@ function drawSum(j) {
     $('err').textContent = ''; loadSum();
   });
   $('alist').querySelectorAll('[data-delpay]').forEach(b => b.onclick = async () => { await api('adminDelPay', { id: b.dataset.delpay }); loadSum(); });
-  $('alist').querySelectorAll('[data-edit]').forEach(b => b.onclick = () => { target = b.dataset.edit; tname = b.dataset.name; cur = sel.value; view2(); });
+  $('alist').querySelectorAll('[data-edit]').forEach(b => b.onclick = () => { cur = sel.value; startPreview(b.dataset.edit, b.dataset.name, b.dataset.role); });
 }
 async function loadDep() {
   const sel = $('dm'); if (!sel.options.length) { sel.innerHTML = monthList().map(m => `<option value="${m}">${mlabel(m)}</option>`).join(''); sel.value = nowM(); sel.onchange = loadDep; $('dprev').onclick = () => step(sel, 1); $('dnext').onclick = () => step(sel, -1); }
@@ -436,8 +442,8 @@ function drawDep(j) {
   $('dlist').innerHTML = e.length ? e.map(x => `<button class="dr" data-ph="${x.phone}" data-name="${esc(x.name)}"><div><b>${esc(x.name)}</b><small>выручка ${rub(x.rev)}</small></div><div><b>${rub(x.total)}</b><small>ЗП</small></div></button>`).join('') : '<span class="mu">Менеджеров пока нет</span>';
   $('dlist').querySelectorAll('.dr').forEach(b => b.onclick = () => { target = b.dataset.ph; tname = b.dataset.name; cur = $('dm').value; seg = 's'; view2(); });
 }
-function view2() { $('vDep').classList.add('hide'); if (S.role === 'head') $('vEmp').classList.add('sub'); document.querySelectorAll('#atabs button').forEach(b => b.classList.remove('on')); $('vEmp').classList.remove('hide'); $('vSum').classList.add('hide'); $('vUsr').classList.add('hide'); $('imp').classList.remove('hide'); $('impn').textContent = tname; $('ttl').textContent = tname; loadMine(); }
-$('impb').onclick = () => view(S.role === 'head' ? 'dep' : 'sum');
+function view2() { $('vDep').classList.add('hide'); $('vEmp').classList.add('sub'); $('impb').textContent = '← Назад к списку'; document.querySelectorAll('#atabs button').forEach(b => b.classList.remove('on')); $('vEmp').classList.remove('hide'); $('vSum').classList.add('hide'); $('vUsr').classList.add('hide'); $('imp').classList.remove('hide'); $('impn').textContent = tname; $('ttl').textContent = tname; loadMine(); }
+$('impb').onclick = () => { if (isSub()) view('dep'); else { pv = null; target = null; setTabs(S.role); view('sum'); } };
 function ask(text, yes) {
   $('dt').textContent = text; $('dyes').textContent = yes || 'Да, закрыть'; $('dlg').classList.remove('hide');
   return new Promise(res => { const done = v => { $('dlg').classList.add('hide'); res(v); }; $('dyes').onclick = () => done(true); $('dno').onclick = () => done(false); $('dlg').onclick = e => { if (e.target === $('dlg')) done(false); }; });

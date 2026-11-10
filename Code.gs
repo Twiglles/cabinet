@@ -150,7 +150,7 @@ function doPost(e) {
   } finally { if (lock) lock.releaseLock(); }
 }
 function adminEmp(phone) { var u = findUser(phone) || {}; return myData(phone, u.role, u.rate); }
-function head(me) { return me.role === 'head' ? null : out({ error: 'forbidden' }); }
+function head(me) { return me.role === 'head' || me.role === 'admin' ? null : out({ error: 'forbidden' }); }
 function headMonth(month) {
   var by = {}, res = [];
   listUsers().forEach(function (u) { if (u.role === 'manager' && u.active) { by[u.phone] = { phone: u.phone, name: u.name, rev: 0, total: 0 }; res.push(by[u.phone]); } });

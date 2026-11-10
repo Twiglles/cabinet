@@ -304,13 +304,15 @@ function drawMonth() {
   data[cur] = rows;
   $('tb').innerHTML = rows.map((r, i) => `<tr><td class="p"><input data-i="${i}" data-k="p" value="${esc(r.p)}" placeholder="Название проекта"></td>
     <td class="w"><input data-i="${i}" data-k="w" value="${esc(r.w)}" placeholder="Вид работы"></td>
-    <td class="n"><input data-i="${i}" data-k="a" inputmode="decimal" value="${esc(r.a)}" placeholder="Сумма, ₽"></td>
+    <td class="n"><input data-i="${i}" data-k="a" inputmode="decimal" value="${esc(fin(r.a))}" placeholder="Сумма, ₽"></td>
     <td class="d"><button class="x" data-del="${i}">✕</button></td></tr>`).join('');
   const lk = locked();
-  $('tb').querySelectorAll('input').forEach(inp => { inp.disabled = lk; inp.oninput = () => { data[cur][+inp.dataset.i][inp.dataset.k] = inp.value; total(); dirty(); }; });
-  $('tb').querySelectorAll('[data-del]').forEach(b => { b.disabled = lk; b.onclick = () => { data[cur].splice(+b.dataset.del, 1); drawMonth(); dirty(); }; });
+  $('tb').querySelectorAll('input').forEach(inp => { inp.disabled = lk; inp.oninput = () => { data[cur][+inp.dataset.i][inp.dataset.k] = inp.dataset.k === 'a' ? fmtInput(inp) : inp.value; total(); dirty(); }; });
+  $('tb').querySelectorAll('[data-del]').forEach(b => { b.disabled = lk; b.onclick = async () => { const r = data[cur][+b.dataset.del]; if ((r.p || r.w || num(r.a)) && !(await ask('Удалить эту строку?', 'Да, удалить'))) return; data[cur].splice(+b.dataset.del, 1); drawMonth(); dirty(); }; });
   $('add').disabled = lk; $('st').textContent = lk ? 'Этот месяц закрыт для правок' : ''; drawSales(); total();
 }
+const fin = v => { v = String(v ?? '').replace(/[^\d,.\-]/g, '').replace('.', ','); let [i, d] = v.split(','); const neg = i.startsWith('-'); i = i.replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, ' '); return (neg ? '-' : '') + i + (d !== undefined ? ',' + d.replace(/\D/g, '').slice(0, 2) : ''); };
+function fmtInput(inp) { const e = inp.value.length - (inp.selectionStart ?? inp.value.length), v = fin(inp.value); if (v !== inp.value) { inp.value = v; try { inp.setSelectionRange(v.length - e, v.length - e); } catch (x) {} } return inp.value; }
 const num = v => Number(String(v).replace(/\s/g, '').replace(',', '.')) || 0;
 const pct = (t, p) => t > 0 ? Math.min(100, Math.round(p / t * 100)) : 0;
 const bar = (t, p) => `<div class="prog"><i style="width:${pct(t, p)}%"></i></div>`;
@@ -346,12 +348,12 @@ function drawSales() {
   if (!grid) return;
   const d = curS(), lk = locked();
   $('scats').innerHTML = '<div class="sh r5"><span>1 нед.</span><span>2 нед.</span><span>3 нед.</span><span>4 нед.</span><span>Выручка, ₽</span></div>' + CATS.map(([n, p], i) => `<div class="cat" id="cat${i}"><div class="ch"><b>${n}</b><span class="mu" id="pl${i}"></span></div>${p ? `<div class="prog"><i id="pb${i}" style="width:0"></i></div>` : ''}
-    <div class="r5">${[0, 1, 2, 3].map(k => `<input aria-label="${n}, ${k + 1} неделя, шт." data-c="${i}" data-w="${k}" inputmode="numeric" placeholder="0" value="${esc(d.cats[i].w[k])}">`).join('')}<input class="rv" aria-label="${n}, выручка за месяц, ₽" data-c="${i}" data-r="1" inputmode="decimal" placeholder="0" value="${esc(d.cats[i].rev)}"></div></div>`).join('');
-  $('sadj').value = d.adj; $('sco').value = d.company; [0, 1, 2].forEach(k => $('k' + k).value = d.kpi[k]);
+    <div class="r5">${[0, 1, 2, 3].map(k => `<input aria-label="${n}, ${k + 1} неделя, шт." data-c="${i}" data-w="${k}" inputmode="numeric" placeholder="0" value="${esc(d.cats[i].w[k])}">`).join('')}<input class="rv" aria-label="${n}, выручка за месяц, ₽" data-c="${i}" data-r="1" inputmode="decimal" placeholder="0" value="${esc(fin(d.cats[i].rev))}"></div></div>`).join('');
+  $('sadj').value = fin(d.adj); $('sco').value = fin(d.company); [0, 1, 2].forEach(k => $('k' + k).value = d.kpi[k]);
   $('skm').classList.toggle('hide', gridM(cur) !== 'KM');
   document.querySelectorAll('#vSales input').forEach(inp => inp.disabled = lk);
-  document.querySelectorAll('#scats input').forEach(inp => inp.oninput = () => { const c = d.cats[+inp.dataset.c]; if (inp.dataset.r) c.rev = inp.value; else c.w[+inp.dataset.w] = inp.value; sEdit(); });
-  $('sadj').oninput = () => { d.adj = $('sadj').value; sEdit(); }; $('sco').oninput = () => { d.company = $('sco').value; sEdit(); };
+  document.querySelectorAll('#scats input').forEach(inp => inp.oninput = () => { const c = d.cats[+inp.dataset.c]; if (inp.dataset.r) c.rev = fmtInput(inp); else c.w[+inp.dataset.w] = inp.value; sEdit(); });
+  $('sadj').oninput = () => { d.adj = fmtInput($('sadj')); sEdit(); }; $('sco').oninput = () => { d.company = fmtInput($('sco')); sEdit(); };
   [0, 1, 2].forEach(k => $('k' + k).oninput = () => { d.kpi[k] = $('k' + k).value; sEdit(); });
   updSales();
 }
@@ -381,7 +383,7 @@ $('vEmp').addEventListener('focusin', async e => {
   if (await ask('Вы меняете прошлый месяц. Вы уверены?', 'Да, менять')) { pastOk.add(cur); t.focus(); }
 });
 
-$('add').onclick = () => { data[cur].push({ p: '', w: '', a: '' }); drawMonth(); dirty(); };
+$('add').onclick = () => { data[cur].push({ p: '', w: '', a: '' }); drawMonth(); dirty(); const l = $('tb').querySelectorAll('tr'); if (l.length) l[l.length - 1].querySelector('input').focus(); };
 function dirty() { $('st').textContent = 'Сохранение…'; $('st').className = 'mu'; clearTimeout(timer); timer = setTimeout(flush, 1200); }
 let queue = Promise.resolve();
 function flush() {

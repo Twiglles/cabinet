@@ -140,6 +140,7 @@ function doPost(e) {
       case 'headMonth': return head(me) || out(headMonth(b.month));
       case 'headEmployee': return head(me) || out(headEmployee(normPhone(b.phone)));
       case 'adminMonth': return admin(me) || out(adminMonth(b.month));
+      case 'adminLinks': return admin(me) || out({ links: adminLinks() });
       case 'adminUsers': return admin(me) || out({ users: listUsers() });
       case 'adminAddPay': return admin(me) || out(adminAddPay(b));
       case 'adminDelPay': return admin(me) || out(adminDelPay(b));
@@ -169,6 +170,11 @@ function headEmployee(phone) {
   var u = findUser(phone);
   if (!u || u.role !== 'manager') return { error: 'forbidden' };
   return { data: {}, pays: {}, sales: salesMap(phone), grid: gridFor(u.role, '', u.rate) };
+}
+function adminLinks() {
+  var s = sh('Ссылки', ['title', 'url']), n = s.getLastRow();
+  if (n < 2) return [];
+  return s.getRange(2, 1, n - 1, 2).getValues().filter(function (r) { return /^https:\/\//.test(String(r[1])); }).map(function (r) { return { t: String(r[0] || r[1]), u: String(r[1]) }; });
 }
 function admin(me) { return me.role === 'admin' ? null : out({ error: 'forbidden' }); }
 

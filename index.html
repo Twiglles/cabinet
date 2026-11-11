@@ -91,6 +91,7 @@ details[open] .chev::after{transform:rotate(-135deg);top:9px}
 .line{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid var(--bd);font-size:14px}.line:first-child{border-top:0}.line.t{font-size:17px;font-weight:800}.line b{white-space:nowrap}
 .kpi{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px;font-size:14px}.kpi input{width:90px;flex:none;text-align:center}
 .nx{font-size:13px;color:var(--mu);margin:0 0 10px}
+.lk{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:13px 14px;border:1px solid var(--bd);border-radius:12px;background:var(--card2);color:var(--tx);text-decoration:none;font-weight:600;min-width:0}.lk:hover{border-color:var(--ach)}.lk span{color:var(--ac)}
 .bar{position:sticky;top:0;z-index:10;background:var(--card);border-bottom:1px solid var(--bd)}
 .bar .in{max-width:720px;margin:0 auto;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px}
 .bar .brand{border:0;margin:0;padding:0}
@@ -160,6 +161,7 @@ details[open] .chev::after{transform:rotate(-135deg);top:9px}
     <div class="card" id="gtc"><h2>Всего за месяц</h2><div id="gt"></div></div>
     <p class="mu" style="margin:0 0 10px">Нажмите на сотрудника, чтобы раскрыть детали и выплаты</p>
     <div id="alist"></div>
+    <div class="card" id="lnk" style="margin-top:6px"><h2>Важные таблицы</h2><div id="llist" class="row" style="flex-direction:column"></div></div>
   </div>
 
   <div id="vDep" class="hide">
@@ -409,7 +411,15 @@ async function loadSum() {
   const key = 's' + sel.value, c = ck(key);
   if (c) drawSum(c); else $('alist').innerHTML = '<span class="mu">Загружаю данные…</span>';
   const j = await api('adminMonth', { month: sel.value });
-  cs(key, j); drawSum(j);
+  cs(key, j); drawSum(j); loadLinks();
+}
+async function loadLinks() {
+  const c = ck('links'); if (c) drawLinks(c);
+  const j = await api('adminLinks'); if (j.links) { cs('links', j.links); drawLinks(j.links); }
+}
+function drawLinks(l) {
+  $('lnk').classList.toggle('hide', !l.length);
+  $('llist').innerHTML = l.map(x => `<a class="lk" href="${esc(x.u)}" target="_blank" rel="noopener noreferrer">${esc(x.t)}<span>↗</span></a>`).join('');
 }
 function drawSum(j) {
   const sel = $('am');

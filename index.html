@@ -492,7 +492,7 @@ function drawDep(j) {
   let tr = 0, tt = 0, h = `<div class="card"><h2>Сводка за ${esc(mlabel(m).toLowerCase())}</h2><p class="mu" style="margin:0">Количество по неделям (1–4), выручка и ЗП каждого менеджера.</p></div>`;
   e.forEach(x => {
     const d = x.sales, used = d && (d.cats || []).some(c => num(c.rev) || (c.w || []).some(num));
-    const open = x.role === 'manager' ? `<button class="g dro" data-ph="${x.phone}" data-name="${esc(x.name)}">Открыть расчёт</button>` : '';
+    const open = '';
     if (!used) { h += `<div class="card"><div class="mh"><b>${esc(x.name)}</b><span class="mu">нет данных</span></div>${open}</div>`; return; }
     tr += x.rev; tt += x.total; const wt = [0, 0, 0, 0];
     const rows = CATS.map(([n], i) => { const c = d.cats[i] || { w: [], rev: '' }, q = [0, 1, 2, 3].map(k => num((c.w || [])[k])); q.forEach((v, k) => { wt[k] += v; wk[k] += v; });

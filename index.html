@@ -91,7 +91,8 @@ details[open] .chev::after{transform:rotate(-135deg);top:9px}
 .line{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid var(--bd);font-size:14px}.line:first-child{border-top:0}.line.t{font-size:17px;font-weight:800}.line b{white-space:nowrap}
 .kpi{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px;font-size:14px}.kpi input{width:90px;flex:none;text-align:center}
 .nx{font-size:13px;color:var(--mu);margin:0 0 10px}
-.pop #mlinks{display:flex;flex-direction:column;gap:6px}#mlbody{display:flex;flex-direction:column;gap:6px}#mlbody.hide{display:none}.pop #mlinks.hide{display:none}.lk{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 12px;font-size:14px;border:1px solid var(--bd);border-radius:8px;background:var(--card2);color:var(--tx);text-decoration:none;font-weight:600;min-width:0}.lk:hover{border-color:var(--ach)}.lk span{color:var(--ac)}
+.pop #mlinks{display:flex;flex-direction:column;gap:6px}#mlbody{display:flex;flex-direction:column;gap:6px}#mlbody.hide{display:none}.pop #mlinks.hide{display:none}.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;margin-bottom:12px;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}.chips button{flex:none;background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:999px;padding:9px 16px;font-size:14px;font-weight:600}.chips button.on{background:var(--ac);border-color:var(--ac);color:#fff}
+.lk{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 12px;font-size:14px;border:1px solid var(--bd);border-radius:8px;background:var(--card2);color:var(--tx);text-decoration:none;font-weight:600;min-width:0}.lk:hover{border-color:var(--ach)}.lk span{color:var(--ac)}
 .imp{top:58px;flex-wrap:nowrap;padding:6px 6px 6px 12px;border-radius:10px;font-size:13px;margin-bottom:12px}.imp .it{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.imp button{padding:6px 11px;font-size:13px;flex:none}
 .bar{position:sticky;top:0;z-index:10;background:var(--card);border-bottom:1px solid var(--bd)}
 .bar .in{max-width:720px;margin:0 auto;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px}
@@ -125,12 +126,13 @@ details[open] .chev::after{transform:rotate(-135deg);top:9px}
   <h1 id="ttl" style="margin-bottom:18px"></h1>
   <div id="pwbox" class="card hide"><h2>Смена пароля</h2><div class="row"><input id="op" type="password" placeholder="Текущий пароль"><input id="np" type="password" placeholder="Новый (от 6 знаков)"><button id="pws">Сохранить</button></div><p id="pwm"></p></div>
   <div id="err" class="er"></div>
-  <div id="atabs" class="tabs hide"><button data-v="sum" data-r="admin" class="on">Все зарплаты</button><button data-v="usr" data-r="admin">Сотрудники</button><button data-v="me" data-r="admin head">Моя оплата</button><button data-v="dep" data-r="head">Отдел</button></div>
+  <div id="atabs" class="tabs hide"><button data-v="sum" data-r="admin" class="on">Все зарплаты</button><button data-v="usr" data-r="admin">Сотрудники</button><button data-v="me" data-r="admin head">Моя оплата</button><button data-v="dep" data-r="head">Сводка отдела</button></div>
 
   <div id="imp" class="imp hide"><span class="it">Просмотр: <b id="impn"></b></span><button class="g" id="impb">← Назад</button></div>
   <div id="vEmp">
     <h2 class="step">1. Выберите месяц</h2>
     <div class="mnav"><button class="g" id="mprev" aria-label="Предыдущий месяц">‹</button><select id="msel" aria-label="Месяц"></select><button class="g" id="mnext" aria-label="Следующий месяц">›</button></div>
+    <div id="mgrs" class="chips hide"></div>
     <div id="seg" class="hide"><button data-t="s" class="on">Продажи</button><button data-t="w">Другие должности</button></div>
     <div id="vSales" class="hide">
       <div class="card"><h2 id="sh">Расчёт продаж</h2><div class="big" id="stot">0 ₽</div>
@@ -268,7 +270,7 @@ function view(v) {
   document.querySelectorAll('#atabs button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
   target = pv ? pv.phone : null; $('vEmp').classList.remove('sub'); $('vDep').classList.toggle('hide', v !== 'dep');
   $('vEmp').classList.toggle('hide', v !== 'me'); $('vSum').classList.toggle('hide', v !== 'sum'); $('vUsr').classList.toggle('hide', v !== 'usr');
-  if (v === 'me') { target = pv ? pv.phone : null; loadMine(); } else if (v === 'sum') loadSum(); else if (v === 'dep') loadDep(); else loadUsers();
+  if (v === 'me') { target = pv ? pv.phone : null; loadMine(); loadMgrs(); } else if (v === 'sum') loadSum(); else if (v === 'dep') loadDep(); else loadUsers();
 }
 
 function monthList() {
@@ -312,7 +314,7 @@ function drawMonth() {
   const lk = locked();
   $('tb').querySelectorAll('input').forEach(inp => { inp.disabled = lk; inp.oninput = () => { data[cur][+inp.dataset.i][inp.dataset.k] = inp.dataset.k === 'a' ? fmtInput(inp) : inp.value; total(); dirty(); }; });
   $('tb').querySelectorAll('[data-del]').forEach(b => { b.disabled = lk; b.onclick = async () => { const r = data[cur][+b.dataset.del]; if ((r.p || r.w || num(r.a)) && !(await ask('Удалить эту строку?', 'Да, удалить'))) return; data[cur].splice(+b.dataset.del, 1); drawMonth(); dirty(); }; });
-  $('add').disabled = lk; $('st').textContent = lk ? 'Этот месяц закрыт для правок' : ''; drawSales(); total();
+  $('add').disabled = lk; $('st').textContent = lk ? 'Этот месяц закрыт для правок' : ''; drawSales(); total(); drawMgrs();
 }
 const fin = v => { v = String(v ?? '').replace(/[^\d,.\-]/g, '').replace('.', ','); let [i, d] = v.split(','); const neg = i.startsWith('-'); i = i.replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, ' '); return (neg ? '-' : '') + i + (d !== undefined ? ',' + d.replace(/\D/g, '').slice(0, 2) : ''); };
 function fmtInput(inp) { const e = inp.value.length - (inp.selectionStart ?? inp.value.length), v = fin(inp.value); if (v !== inp.value) { inp.value = v; try { inp.setSelectionRange(v.length - e, v.length - e); } catch (x) {} } return inp.value; }
@@ -342,6 +344,26 @@ function calcS(s, g) {
   return { rev, adj, i, base, pc, part, km, co, cp, comp, bonus, total: base + part + comp + bonus + adj };
 }
 const blankS = () => ({ adj: '', company: '', kpi: ['', '', ''], cats: CATS.map(() => ({ w: ['', '', '', ''], rev: '' })) });
+let mgrList = [];
+async function loadMgrs() {
+  if ((pv ? pv.role : S.role) !== 'head') { mgrList = []; drawMgrs(); return; }
+  const c = ck('mgl'); if (c) { mgrList = c; drawMgrs(); }
+  try { const j = await api('headMonth', { month: cur || nowM() }); if (j.employees) { mgrList = j.employees.map(x => ({ phone: x.phone, name: x.name })); cs('mgl', mgrList); drawMgrs(); } } catch (e) {}
+}
+function drawMgrs() {
+  const head = (pv ? pv.role : S.role) === 'head';
+  $('mgrs').classList.toggle('hide', !head || !mgrList.length);
+  if (!head) return;
+  const own = pv ? pv.phone : S.phone, on = target || own;
+  $('mgrs').innerHTML = [{ phone: own, name: (pv ? pv.name : S.name) }, ...mgrList].map(x => `<button class="${x.phone === on ? 'on' : ''}" data-ph="${x.phone}" data-n="${esc(x.name)}">${esc(x.name.split(' ')[0])}</button>`).join('');
+  $('mgrs').querySelectorAll('button').forEach(b => b.onclick = () => {
+    if (b.dataset.ph === on) return;
+    flush();
+    if (b.dataset.ph === own) { target = pv ? pv.phone : null; $('vEmp').classList.remove('sub'); $('ttl').textContent = pv ? pv.name : S.name; }
+    else { target = b.dataset.ph; tname = b.dataset.n; $('vEmp').classList.add('sub'); $('ttl').textContent = tname; }
+    $('imp').classList.toggle('hide', !pv); seg = 's'; loadMine();
+  });
+}
 const gridM = m => grid === 'KM' && m < '2026-08' ? 'A' : grid;
 const curS = () => sales[cur] || (sales[cur] = blankS());
 function drawSales() {

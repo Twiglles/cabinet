@@ -370,9 +370,11 @@ function drawMgrs() {
 const gridM = m => grid === 'KM' && m < '2026-08' ? 'A' : grid;
 const curS = () => sales[cur] || (sales[cur] = blankS());
 function drawSales() {
-  $('seg').classList.add('hide');
-  $('vSales').classList.toggle('hide', !grid); $('vWork').classList.remove('hide');
-  $('mt').textContent = grid ? 'Другие должности' : '2. Работы за ' + mlabel(cur).toLowerCase();
+  const tabs = !!grid && grid !== 'KM';
+  $('seg').classList.toggle('hide', !tabs);
+  $('vSales').classList.toggle('hide', !grid || (tabs && seg !== 's')); $('vWork').classList.toggle('hide', tabs && seg !== 'w');
+  document.querySelectorAll('#seg button').forEach(b => b.classList.toggle('on', b.dataset.t === seg));
+  $('mt').textContent = grid && !tabs ? 'Другие должности' : '2. Работы за ' + mlabel(cur).toLowerCase();
   document.querySelectorAll('#seg button').forEach(b => b.classList.toggle('on', b.dataset.t === seg));
   if (!grid) return;
   const d = curS(), lk = locked();

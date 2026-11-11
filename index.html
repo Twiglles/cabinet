@@ -91,7 +91,7 @@ details[open] .chev::after{transform:rotate(-135deg);top:9px}
 .line{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid var(--bd);font-size:14px}.line:first-child{border-top:0}.line.t{font-size:17px;font-weight:800}.line b{white-space:nowrap}
 .kpi{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px;font-size:14px}.kpi input{width:90px;flex:none;text-align:center}
 .nx{font-size:13px;color:var(--mu);margin:0 0 10px}
-.pop #mlinks{display:flex;flex-direction:column;gap:6px;padding-bottom:10px;margin-bottom:2px;border-bottom:1px solid var(--bd)}.pop #mlinks.hide{display:none}.lk{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 12px;font-size:14px;border:1px solid var(--bd);border-radius:8px;background:var(--card2);color:var(--tx);text-decoration:none;font-weight:600;min-width:0}.lk:hover{border-color:var(--ach)}.lk span{color:var(--ac)}
+.pop #mlinks{display:flex;flex-direction:column;gap:6px}#mlbody{display:flex;flex-direction:column;gap:6px}#mlbody.hide{display:none}.pop #mlinks.hide{display:none}.lk{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 12px;font-size:14px;border:1px solid var(--bd);border-radius:8px;background:var(--card2);color:var(--tx);text-decoration:none;font-weight:600;min-width:0}.lk:hover{border-color:var(--ach)}.lk span{color:var(--ac)}
 .bar{position:sticky;top:0;z-index:10;background:var(--card);border-bottom:1px solid var(--bd)}
 .bar .in{max-width:720px;margin:0 auto;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px}
 .bar .brand{border:0;margin:0;padding:0}
@@ -423,7 +423,9 @@ async function loadLinks() {
 function drawLinks(l) {
   l = [...LINKS0, ...l.filter(x => !LINKS0.some(y => y.u === x.u))];
   $('mlinks').classList.toggle('hide', !l.length);
-  $('mlinks').innerHTML = '<div class="mu" style="margin-bottom:6px">Таблицы</div>' + l.map(x => `<a class="lk" href="${esc(x.u)}" target="_blank" rel="noopener noreferrer">${esc(x.t)}<span>↗</span></a>`).join('');
+  const op = !!$('mlbody') && !$('mlbody').classList.contains('hide');
+  $('mlinks').innerHTML = `<button class="g" id="mltog">Таблицы ${op ? '▴' : '▾'}</button><div id="mlbody" class="${op ? '' : 'hide'}">` + l.map(x => `<a class="lk" href="${esc(x.u)}" target="_blank" rel="noopener noreferrer">${esc(x.t)}<span>↗</span></a>`).join('') + '</div>';
+  $('mltog').onclick = e => { e.stopPropagation(); $('mlbody').classList.toggle('hide'); $('mltog').textContent = 'Таблицы ' + ($('mlbody').classList.contains('hide') ? '▾' : '▴'); };
 }
 function drawSum(j) {
   const sel = $('am');

@@ -348,7 +348,7 @@ let mgrList = [];
 async function loadMgrs() {
   if ((pv ? pv.role : S.role) !== 'head') { mgrList = []; drawMgrs(); return; }
   const c = ck('mgl'); if (c) { mgrList = c; drawMgrs(); }
-  try { const j = await api('headMonth', { month: cur || nowM() }); if (j.employees) { mgrList = j.employees.filter(x => x.role === 'manager').map(x => ({ phone: x.phone, name: x.name })); cs('mgl', mgrList); drawMgrs(); } } catch (e) {}
+  try { const j = await api('headMonth', { month: cur || nowM() }); if (j.employees) { mgrList = j.employees.filter(x => x.role !== 'head').map(x => ({ phone: x.phone, name: x.name })); cs('mgl', mgrList); drawMgrs(); } } catch (e) {}
 }
 function drawMgrs() {
   const head = (pv ? pv.role : S.role) === 'head';

@@ -132,11 +132,11 @@ table.sm{table-layout:auto;margin:0;width:100%}table.sm th,table.sm td{padding:5
 
   <div id="imp" class="imp hide"><span class="it">Просмотр: <b id="impn"></b></span><button class="g" id="impb">← Назад</button></div>
   <div id="vEmp">
-    <h2 class="step">1. Выберите месяц</h2>
-    <div class="mnav"><button class="g" id="mprev" aria-label="Предыдущий месяц">‹</button><select id="msel" aria-label="Месяц"></select><button class="g" id="mnext" aria-label="Следующий месяц">›</button></div>
-    <h2 id="mgrt" class="step hide" style="margin-top:20px">2. Выберите менеджера</h2>
+    <h2 id="mgrt" class="step hide">1. Выберите менеджера</h2>
     <div id="mgrs" class="chips hide"></div>
-    <div id="seg" class="hide"><button data-t="s" class="on">Продажи</button><button data-t="w">Другие должности</button></div>
+    <h2 class="step" id="mh">1. Выберите месяц</h2>
+    <div class="mnav"><button class="g" id="mprev" aria-label="Предыдущий месяц">‹</button><select id="msel" aria-label="Месяц"></select><button class="g" id="mnext" aria-label="Следующий месяц">›</button></div>
+        <div id="seg" class="hide"><button data-t="s" class="on">Продажи</button><button data-t="w">Другие должности</button></div>
     <div id="vSales" class="hide">
       <div class="card"><h2 id="sh">Расчёт продаж</h2><div class="big" id="stot">0 ₽</div>
         <div class="st"><div><small>Выручка за месяц</small><b id="srev">0 ₽</b></div><div><small>Уровень ставки</small><b id="slvl"></b></div></div>
@@ -353,7 +353,7 @@ async function loadMgrs() {
 }
 function drawMgrs() {
   const head = (pv ? pv.role : S.role) === 'head';
-  $('mgrs').classList.toggle('hide', !head || !mgrList.length); $('mgrt').classList.toggle('hide', !head || !mgrList.length);
+  $('mgrs').classList.toggle('hide', !head || !mgrList.length); const sh2 = head && mgrList.length; $('mgrt').classList.toggle('hide', !sh2); $('mh').textContent = (sh2 ? '2' : '1') + '. Выберите месяц';
   if (!head) return;
   const own = pv ? pv.phone : S.phone, on = target || own;
   $('mgrs').innerHTML = [{ phone: own, name: (pv ? pv.name : S.name) }, ...mgrList].map(x => `<button class="${x.phone === on ? 'on' : ''}" data-ph="${x.phone}" data-n="${esc(x.name)}">${esc(x.name.split(' ')[0])}</button>`).join('');

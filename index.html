@@ -155,7 +155,7 @@ table.sm{table-layout:auto;margin:0;width:100%}table.sm th,table.sm td{padding:5
     </div>
     <div id="vWork">
     <h2 id="mt" class="step" style="margin-top:20px"></h2>
-    <div class="card"><div id="ldm" class="mu">Загружаю данные…</div>
+    <div class="card"><h2 id="mti" class="hide">Другие должности</h2><div id="ldm" class="mu">Загружаю данные…</div>
       <table><thead><tr><th>Проект</th><th>Вид работы</th><th class="n">Сумма, ₽</th><th class="d"></th></tr></thead><tbody id="tb"></tbody></table>
       <div class="row" style="margin-top:10px"><button class="g" id="add" style="flex:none">+ Строка</button></div>
       <div class="mu" id="st" style="margin-top:6px"></div>
@@ -374,7 +374,8 @@ function drawSales() {
   $('seg').classList.toggle('hide', !tabs);
   $('vSales').classList.toggle('hide', !grid || (tabs && seg !== 's')); $('vWork').classList.toggle('hide', tabs && seg !== 'w');
   document.querySelectorAll('#seg button').forEach(b => b.classList.toggle('on', b.dataset.t === seg));
-  $('mt').textContent = grid && !tabs ? 'Другие должности' : '2. Работы за ' + mlabel(cur).toLowerCase();
+  const inCard = !!grid && !tabs; $('mt').classList.toggle('hide', inCard); $('mti').classList.toggle('hide', !inCard);
+  $('mt').textContent = '2. Работы за ' + mlabel(cur).toLowerCase();
   document.querySelectorAll('#seg button').forEach(b => b.classList.toggle('on', b.dataset.t === seg));
   if (!grid) return;
   const d = curS(), lk = locked();

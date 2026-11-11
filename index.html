@@ -436,12 +436,14 @@ async function loadDep() {
   const sel = $('dm'); if (!sel.options.length) { sel.innerHTML = monthList().map(m => `<option value="${m}">${mlabel(m)}</option>`).join(''); sel.value = nowM(); sel.onchange = loadDep; $('dprev').onclick = () => step(sel, 1); $('dnext').onclick = () => step(sel, -1); }
   const key = 'd' + sel.value, c = ck(key);
   if (c) drawDep(c); else $('dlist').innerHTML = '<span class="mu">Загружаю данные…</span>';
-  const j = await api('headMonth', { month: sel.value }); cs(key, j); drawDep(j);
+  const j = await api('headMonth', { month: sel.value });
+  if (j.error) { $('dlist').innerHTML = '<span class="er">Не удалось загрузить отдел (' + esc(j.error) + '). Скорее всего, не обновлён скрипт.</span>'; return; }
+  cs(key, j); drawDep(j);
 }
 function drawDep(j) {
   const e = j.employees || [], gr = e.reduce((s, x) => s + x.rev, 0), gt = e.reduce((s, x) => s + x.total, 0);
   $('dtot').innerHTML = `<div class="big">${rub(gr)}</div><div class="st"><div><small>Менеджеров</small><b>${e.length}</b></div><div><small>ЗП менеджеров</small><b>${rub(gt)}</b></div></div>`;
-  $('dlist').innerHTML = e.length ? e.map(x => `<button class="dr" data-ph="${x.phone}" data-name="${esc(x.name)}"><div><b>${esc(x.name)}</b><small>выручка ${rub(x.rev)}</small></div><div><b>${rub(x.total)}</b><small>ЗП</small></div></button>`).join('') : '<span class="mu">Менеджеров пока нет</span>';
+  $('dlist').innerHTML = e.length ? e.map(x => `<button class="dr" data-ph="${x.phone}" data-name="${esc(x.name)}"><div><b>${esc(x.name)}</b><small>выручка ${rub(x.rev)}</small></div><div><b>${rub(x.total)}</b><small>ЗП</small></div></button>`).join('') : '<span class="mu">Менеджеров пока нет. Им должна быть назначена роль «Менеджер продаж» и включён доступ.</span>';
   $('dlist').querySelectorAll('.dr').forEach(b => b.onclick = () => { target = b.dataset.ph; tname = b.dataset.name; cur = $('dm').value; seg = 's'; view2(); });
 }
 function view2() { $('vDep').classList.add('hide'); $('vEmp').classList.add('sub'); $('impb').textContent = '← Назад к списку'; document.querySelectorAll('#atabs button').forEach(b => b.classList.remove('on')); $('vEmp').classList.remove('hide'); $('vSum').classList.add('hide'); $('vUsr').classList.add('hide'); $('imp').classList.remove('hide'); $('impn').textContent = tname; $('ttl').textContent = tname; loadMine(); }

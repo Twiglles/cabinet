@@ -94,6 +94,7 @@ details[open] .chev::after{transform:rotate(-135deg);top:9px}
 .pop #mlinks{display:flex;flex-direction:column;gap:6px}#mlbody{display:flex;flex-direction:column;gap:6px}#mlbody.hide{display:none}.pop #mlinks.hide{display:none}.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;margin-bottom:12px;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}.chips button{flex:none;background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:999px;padding:9px 16px;font-size:14px;font-weight:600}.chips button.on{background:var(--ac);border-color:var(--ac);color:#fff}
 .mh{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:8px}.mh b{font-size:17px}.mh span{font-weight:800;font-size:17px}.mh span.mu{font-weight:400;font-size:13px}
 table.sm{table-layout:auto;margin:0;width:100%}table.sm th,table.sm td{padding:5px 4px;font-size:13px;text-align:center}table.sm th:first-child,table.sm td:first-child{text-align:left}table.sm .r,table.sm td.r{text-align:right}table.sm tr+tr td{border-top:1px solid var(--bd)}.dro{margin-top:10px;width:100%;padding:9px}
+.sst{font-size:13px;min-height:0;margin:-6px 0 8px}.sst:empty{display:none}
 .lk{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 12px;font-size:14px;border:1px solid var(--bd);border-radius:8px;background:var(--card2);color:var(--tx);text-decoration:none;font-weight:600;min-width:0}.lk:hover{border-color:var(--ach)}.lk span{color:var(--ac)}
 .imp{top:58px;flex-wrap:nowrap;padding:6px 6px 6px 12px;border-radius:10px;font-size:13px;margin-bottom:12px}.imp .it{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.imp button{padding:6px 11px;font-size:13px;flex:none}
 .bar{position:sticky;top:0;z-index:10;background:var(--card);border-bottom:1px solid var(--bd)}
@@ -139,7 +140,7 @@ table.sm{table-layout:auto;margin:0;width:100%}table.sm th,table.sm td{padding:5
     <div class="mnav"><button class="g" id="mprev" aria-label="Предыдущий месяц">‹</button><select id="msel" aria-label="Месяц"></select><button class="g" id="mnext" aria-label="Следующий месяц">›</button></div>
         <div id="seg" class="hide"><button data-t="s" class="on">Продажи</button><button data-t="w">Другие должности</button></div>
     <div id="vSales" class="hide">
-      <div class="card"><h2 id="sh">Расчёт продаж</h2><div class="big" id="stot">0 ₽</div>
+      <div class="card"><h2 id="sh">Расчёт продаж</h2><div id="sst" class="sst"></div><div class="big" id="stot">0 ₽</div>
         <div class="st"><div><small>Выручка за месяц</small><b id="srev">0 ₽</b></div><div><small>Уровень ставки</small><b id="slvl"></b></div></div>
         <div class="prog" style="margin:12px 0 6px"><i id="slp" style="width:0"></i></div><div class="nx" id="snx" style="margin:0"></div></div>
       <div class="card"><h2>Продажи по тарифам</h2><p class="mu" style="margin:-4px 0 12px"><b>Шт.</b> по неделям месяца. <b>Выручка</b> — вся сумма по тарифу за месяц. На ЗП влияет только выручка.</p><div id="scats"></div></div>
@@ -316,7 +317,7 @@ function drawMonth() {
   const lk = locked();
   $('tb').querySelectorAll('input').forEach(inp => { inp.disabled = lk; inp.oninput = () => { data[cur][+inp.dataset.i][inp.dataset.k] = inp.dataset.k === 'a' ? fmtInput(inp) : inp.value; total(); dirty(); }; });
   $('tb').querySelectorAll('[data-del]').forEach(b => { b.disabled = lk; b.onclick = async () => { const r = data[cur][+b.dataset.del]; if ((r.p || r.w || num(r.a)) && !(await ask('Удалить эту строку?', 'Да, удалить'))) return; data[cur].splice(+b.dataset.del, 1); drawMonth(); dirty(); }; });
-  $('add').disabled = lk; $('st').textContent = lk ? 'Этот месяц закрыт для правок' : ''; drawSales(); total(); drawMgrs();
+  $('add').disabled = lk; setSt(lk ? 'Этот месяц закрыт для правок' : '', 'mu'); drawSales(); total(); drawMgrs();
 }
 const fin = v => { v = String(v ?? '').replace(/[^\d,.\-]/g, '').replace('.', ','); let [i, d] = v.split(','); const neg = i.startsWith('-'); i = i.replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, ' '); return (neg ? '-' : '') + i + (d !== undefined ? ',' + d.replace(/\D/g, '').slice(0, 2) : ''); };
 function fmtInput(inp) { const e = inp.value.length - (inp.selectionStart ?? inp.value.length), v = fin(inp.value); if (v !== inp.value) { inp.value = v; try { inp.setSelectionRange(v.length - e, v.length - e); } catch (x) {} } return inp.value; }
@@ -412,7 +413,8 @@ $('vEmp').addEventListener('focusin', async e => {
 });
 
 $('add').onclick = () => { data[cur].push({ p: '', w: '', a: '' }); drawMonth(); dirty(); const l = $('tb').querySelectorAll('tr'); if (l.length) l[l.length - 1].querySelector('input').focus(); };
-function dirty() { $('st').textContent = 'Сохранение…'; $('st').className = 'mu'; clearTimeout(timer); timer = setTimeout(flush, 1200); }
+function setSt(t, c) { ['st', 'sst'].forEach(i => { $(i).textContent = t; $(i).className = c + (i === 'sst' ? ' sst' : ''); }); }
+function dirty() { setSt('Сохранение…', 'mu'); clearTimeout(timer); timer = setTimeout(flush, 1200); }
 let queue = Promise.resolve();
 function flush() {
   if (!timer) return queue; clearTimeout(timer); timer = null;
@@ -426,8 +428,8 @@ async function doSave(month, phone, rows, sl) {
   try {
     let j = rows ? await api('saveMonth', { month, phone, rows }) : {};
     if (!j.error && sl) j = await api('saveSales', { month, phone, sales: sl });
-    $('st').textContent = j.error ? 'Не сохранено: ' + j.error : 'Сохранено ✓'; $('st').className = j.error ? 'er' : 'ok';
-  } catch (e) { $('st').textContent = 'Не сохранено: ' + e.message; $('st').className = 'er'; }
+    setSt(j.error ? 'Не сохранено: ' + j.error : 'Сохранено ✓', j.error ? 'er' : 'ok');
+  } catch (e) { setSt('Не сохранено: ' + e.message, 'er'); }
 }
 addEventListener('unhandledrejection', e => { const m = e.reason && e.reason.message; if (m && m !== 'Сессия истекла' && m !== 'must') $('err').textContent = 'Ошибка: ' + m; });
 addEventListener('beforeunload', () => { if (timer) flush(); });

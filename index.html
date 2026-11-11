@@ -178,7 +178,7 @@ details[open] .chev::after{transform:rotate(-135deg);top:9px}
     <label class="fl" for="un">Имя и фамилия</label><input id="un" placeholder="Например, Анна Петрова" autocomplete="off">
     <label class="fl" for="up">Телефон</label><input id="up" type="tel" placeholder="+7 900 000-00-00" autocomplete="off">
     <label class="fl" for="ur">Выберите роль</label><select id="ur"><option value="user">Сотрудник</option><option value="manager">Менеджер продаж</option><option value="head">Руководитель отдела продаж</option><option value="admin">Администратор</option></select>
-    <div id="urw" class="hide"><label class="fl" for="urt">Ставка</label><select id="urt"><option value="A">Младший менеджер (ММП)</option><option value="B">Менеджер-стажёр</option><option value="KM">Ключевой менеджер (КМП)</option></select></div>
+    <div id="urw" class="hide"><label class="fl" for="urt">Ставка</label><select id="urt"><option value="A">Младший менеджер по продажам (ММП)</option><option value="B">Менеджер-стажёр</option><option value="KM">Ключевой менеджер по продажам (КМП)</option></select></div>
     <label class="fl" for="upw" id="upl">Временный пароль (от 6 знаков)</label><input id="upw" placeholder="Придумайте пароль" autocomplete="off">
     <p id="um" class="er" style="margin:10px 0 0"></p>
     <div class="row" style="margin-top:14px"><button class="g" id="uc">Отмена</button><button id="us">Сохранить</button></div>
@@ -361,7 +361,7 @@ const sEdit = () => { updSales(); total(); dirty(); };
 function updSales() {
   if (!grid) return;
   const d = curS(), c = calcS(d, gridM(cur)), list = gridM(cur) === 'B' ? TIERS.B : TIERS.A, top = list[list.length - 1][0], prev = c.i ? list[c.i - 1][0] : 0;
-  $('sh').textContent = 'Расчёт продаж · ' + ({ KM: 'КМП', A: 'ММП', B: 'стажёр' }[gridM(cur)] || '');
+  $('sh').textContent = 'Расчёт выплаты · ' + ({ KM: 'Ключевой менеджер по продажам', A: 'Младший менеджер по продажам', B: 'Менеджер-стажёр' }[gridM(cur)] || '');
   $('stot').textContent = rub(c.total); $('srev').textContent = rub(c.rev); $('slvl').textContent = `${c.i + 1} из ${list.length}`;
   $('slp').style.width = (c.rev >= top ? 100 : Math.max(0, Math.min(100, (c.rev - prev) / (list[c.i][0] - prev) * 100))) + '%';
   $('snx').innerHTML = c.rev >= top ? 'Выше последнего уровня, применена максимальная ставка.' : `До следующего уровня ещё <b>${rub(list[c.i][0] - c.rev)}</b> выручки`;
@@ -371,7 +371,7 @@ function updSales() {
     if (p) { $('pb' + i).style.width = Math.min(100, q / p * 100) + '%'; $('cat' + i).classList.toggle('full', q >= p); }
   });
   let k = 0; const L = (a, b, cl) => `<div class="line${cl || ''}"><span>${cl ? '' : ++k + '. '}${a}</span><b>${b}</b></div>`;
-  let h = L('Выручка менеджера', rub(c.rev)) + L(c.km ? 'Оклад ключевого менеджера' : 'Оклад уровня ' + (c.i + 1), rub(c.base)) + L(`Процент от выручки (${c.pc}%)`, rub(c.part));
+  let h = L('Выручка менеджера', rub(c.rev)) + L(c.km ? 'Оклад ключевого менеджера по продажам' : 'Оклад уровня ' + (c.i + 1), rub(c.base)) + L(`Процент от выручки (${c.pc}%)`, rub(c.part));
   if (c.km) h += L('Выручка компании', rub(c.co)) + L(`Доплата с выручки компании (${c.cp}%)`, rub(c.comp)) + L('Премия KPI', rub(c.bonus));
   h += L('Корректировка (+ или −)', (c.adj > 0 ? '+ ' : '') + rub(c.adj)) + L('Итого по продажам', rub(c.total), ' t');
   $('scalc').innerHTML = h;
@@ -455,7 +455,7 @@ async function loadUsers() {
   const j = await api('adminUsers');
   const RL = { user: 'Сотрудник', manager: 'Менеджер продаж', head: 'Руководитель отдела продаж', admin: 'Администратор' };
   ULIST = j.users || [];
-  $('ulist').innerHTML = ULIST.map(u => `<div class="ur${u.active ? '' : ' off'}" data-edit="${u.phone}"><div><b>${esc(u.name)}</b><div class="mu">${RL[u.role] || 'Сотрудник'}${['manager', 'head'].includes(u.role) ? ' · ' + ({ KM: 'КМП', A: 'ММП', B: 'стажёр' }[u.rate] || (u.role === 'head' ? 'КМП' : 'ММП')) : ''}${u.active ? '' : ' · доступ отключён'}</div></div>
+  $('ulist').innerHTML = ULIST.map(u => `<div class="ur${u.active ? '' : ' off'}" data-edit="${u.phone}"><div><b>${esc(u.name)}</b><div class="mu">${RL[u.role] || 'Сотрудник'}${['manager', 'head'].includes(u.role) ? ' · ' + ({ KM: 'ключевой', A: 'младший', B: 'стажёр' }[u.rate] || (u.role === 'head' ? 'ключевой' : 'младший')) : ''}${u.active ? '' : ' · доступ отключён'}</div></div>
     ${u.role === 'admin' ? '' : `<button class="sw${u.active ? ' on' : ''}" role="switch" aria-checked="${u.active}" aria-label="Доступ сотрудника" data-act="${u.phone}" data-on="${u.active}"><i></i></button>`}</div>`).join('');
   $('ulist').querySelectorAll('[data-edit]').forEach(r => r.onclick = e => { if (e.target.closest('.sw')) return; openSheet(ULIST.find(u => u.phone === r.dataset.edit)); });
   $('ulist').querySelectorAll('[data-act]').forEach(b => b.onclick = async () => {

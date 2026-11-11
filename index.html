@@ -92,6 +92,8 @@ details[open] .chev::after{transform:rotate(-135deg);top:9px}
 .kpi{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px;font-size:14px}.kpi input{width:90px;flex:none;text-align:center}
 .nx{font-size:13px;color:var(--mu);margin:0 0 10px}
 .pop #mlinks{display:flex;flex-direction:column;gap:6px}#mlbody{display:flex;flex-direction:column;gap:6px}#mlbody.hide{display:none}.pop #mlinks.hide{display:none}.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;margin-bottom:12px;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}.chips button{flex:none;background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:999px;padding:9px 16px;font-size:14px;font-weight:600}.chips button.on{background:var(--ac);border-color:var(--ac);color:#fff}
+.mh{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:8px}.mh b{font-size:17px}.mh span{font-weight:800;font-size:17px}.mh span.mu{font-weight:400;font-size:13px}
+table.sm{table-layout:auto;margin:0;width:100%}table.sm th,table.sm td{padding:5px 4px;font-size:13px;text-align:center}table.sm th:first-child,table.sm td:first-child{text-align:left}table.sm .r,table.sm td.r{text-align:right}table.sm tr+tr td{border-top:1px solid var(--bd)}.dro{margin-top:10px;width:100%;padding:9px}
 .lk{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 12px;font-size:14px;border:1px solid var(--bd);border-radius:8px;background:var(--card2);color:var(--tx);text-decoration:none;font-weight:600;min-width:0}.lk:hover{border-color:var(--ach)}.lk span{color:var(--ac)}
 .imp{top:58px;flex-wrap:nowrap;padding:6px 6px 6px 12px;border-radius:10px;font-size:13px;margin-bottom:12px}.imp .it{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.imp button{padding:6px 11px;font-size:13px;flex:none}
 .bar{position:sticky;top:0;z-index:10;background:var(--card);border-bottom:1px solid var(--bd)}
@@ -170,9 +172,7 @@ details[open] .chev::after{transform:rotate(-135deg);top:9px}
   <div id="vDep" class="hide">
     <h2 class="step">Выберите месяц</h2>
     <div class="mnav"><button class="g" id="dprev" aria-label="Предыдущий месяц">‹</button><select id="dm" aria-label="Месяц"></select><button class="g" id="dnext" aria-label="Следующий месяц">›</button></div>
-    <div class="card"><h2>Выручка отдела</h2><div id="dtot"></div></div>
-    <p class="mu" style="margin:0 0 10px">Нажмите на менеджера, чтобы открыть и поправить его продажи</p>
-    <div id="dlist"></div>
+    <div id="dbody"></div>
   </div>
   <div id="vUsr" class="hide">
     <button id="addu" class="addu">+ Добавить сотрудника</button>
@@ -348,7 +348,7 @@ let mgrList = [];
 async function loadMgrs() {
   if ((pv ? pv.role : S.role) !== 'head') { mgrList = []; drawMgrs(); return; }
   const c = ck('mgl'); if (c) { mgrList = c; drawMgrs(); }
-  try { const j = await api('headMonth', { month: cur || nowM() }); if (j.employees) { mgrList = j.employees.map(x => ({ phone: x.phone, name: x.name })); cs('mgl', mgrList); drawMgrs(); } } catch (e) {}
+  try { const j = await api('headMonth', { month: cur || nowM() }); if (j.employees) { mgrList = j.employees.filter(x => x.role === 'manager').map(x => ({ phone: x.phone, name: x.name })); cs('mgl', mgrList); drawMgrs(); } } catch (e) {}
 }
 function drawMgrs() {
   const head = (pv ? pv.role : S.role) === 'head';
@@ -475,16 +475,27 @@ function drawSum(j) {
 async function loadDep() {
   const sel = $('dm'); if (!sel.options.length) { sel.innerHTML = monthList().map(m => `<option value="${m}">${mlabel(m)}</option>`).join(''); sel.value = nowM(); sel.onchange = loadDep; $('dprev').onclick = () => step(sel, 1); $('dnext').onclick = () => step(sel, -1); }
   const key = 'd' + sel.value, c = ck(key);
-  if (c) drawDep(c); else $('dlist').innerHTML = '<span class="mu">Загружаю данные…</span>';
+  if (c) drawDep(c); else $('dbody').innerHTML = '<span class="mu">Загружаю данные…</span>';
   const j = await api('headMonth', { month: sel.value });
-  if (j.error) { $('dlist').innerHTML = '<span class="er">Не удалось загрузить отдел (' + esc(j.error) + '). Скорее всего, не обновлён скрипт.</span>'; return; }
+  if (j.error) { $('dbody').innerHTML = '<span class="er">Не удалось загрузить отдел (' + esc(j.error) + '). Скорее всего, не обновлён скрипт.</span>'; return; }
   cs(key, j); drawDep(j);
 }
 function drawDep(j) {
-  const e = j.employees || [], gr = e.reduce((s, x) => s + x.rev, 0), gt = e.reduce((s, x) => s + x.total, 0);
-  $('dtot').innerHTML = `<div class="big">${rub(gr)}</div><div class="st"><div><small>Менеджеров</small><b>${e.length}</b></div><div><small>ЗП менеджеров</small><b>${rub(gt)}</b></div></div>`;
-  $('dlist').innerHTML = e.length ? e.map(x => `<button class="dr" data-ph="${x.phone}" data-name="${esc(x.name)}"><div><b>${esc(x.name)}</b><small>выручка ${rub(x.rev)}</small></div><div><b>${rub(x.total)}</b><small>ЗП</small></div></button>`).join('') : '<span class="mu">Менеджеров пока нет. Им должна быть назначена роль «Менеджер продаж» и включён доступ.</span>';
-  $('dlist').querySelectorAll('.dr').forEach(b => b.onclick = () => { target = b.dataset.ph; tname = b.dataset.name; cur = $('dm').value; seg = 's'; view2(); });
+  const e = j.employees || [], m = $('dm').value, wk = [0, 0, 0, 0];
+  let tr = 0, tt = 0, h = `<div class="card"><h2>Сводка за ${esc(mlabel(m).toLowerCase())}</h2><p class="mu" style="margin:0">Количество по неделям (1–4), выручка и ЗП каждого менеджера.</p></div>`;
+  e.forEach(x => {
+    const d = x.sales, used = d && (d.cats || []).some(c => num(c.rev) || (c.w || []).some(num));
+    const open = x.role === 'manager' ? `<button class="g dro" data-ph="${x.phone}" data-name="${esc(x.name)}">Открыть расчёт</button>` : '';
+    if (!used) { h += `<div class="card"><div class="mh"><b>${esc(x.name)}</b><span class="mu">нет данных</span></div>${open}</div>`; return; }
+    tr += x.rev; tt += x.total; const wt = [0, 0, 0, 0];
+    const rows = CATS.map(([n], i) => { const c = d.cats[i] || { w: [], rev: '' }, q = [0, 1, 2, 3].map(k => num((c.w || [])[k])); q.forEach((v, k) => { wt[k] += v; wk[k] += v; });
+      if (!q.some(Boolean) && !num(c.rev)) return '';
+      return `<tr><td>${n}</td>${q.map(v => `<td>${v || '·'}</td>`).join('')}<td>${q.reduce((a, b) => a + b, 0)}</td><td class="r">${num(c.rev) ? rub(num(c.rev)) : '·'}</td></tr>`; }).join('');
+    h += `<div class="card"><div class="mh"><b>${esc(x.name)}</b><span>${rub(x.total)}</span></div><div style="overflow:auto"><table class="sm"><tr><th>Тариф</th><th>1н</th><th>2н</th><th>3н</th><th>4н</th><th>Σ</th><th class="r">Выручка</th></tr>${rows}<tr><td><b>Всего</b></td>${wt.map(v => `<td><b>${v}</b></td>`).join('')}<td><b>${wt.reduce((a, b) => a + b, 0)}</b></td><td class="r"><b>${rub(x.rev)}</b></td></tr></table></div>${open}</div>`;
+  });
+  h += `<div class="card"><h2>Итого по отделу</h2><div class="line"><span>Продано по неделям (шт.)</span><b>${wk.join(' · ')}</b></div><div class="line"><span>Выручка менеджеров</span><b>${rub(tr)}</b></div><div class="line t"><span>Всего ЗП</span><b>${rub(tt)}</b></div></div>`;
+  $('dbody').innerHTML = h;
+  $('dbody').querySelectorAll('.dro').forEach(b => b.onclick = () => { target = b.dataset.ph; tname = b.dataset.name; cur = $('dm').value; seg = 's'; view2(); });
 }
 function view2() { $('vDep').classList.add('hide'); $('vEmp').classList.add('sub'); $('impb').textContent = '← Назад'; document.querySelectorAll('#atabs button').forEach(b => b.classList.remove('on')); $('vEmp').classList.remove('hide'); $('vSum').classList.add('hide'); $('vUsr').classList.add('hide'); $('imp').classList.remove('hide'); $('impn').textContent = tname; $('ttl').textContent = tname; loadMine(); }
 $('impb').onclick = () => { if (isSub()) view('dep'); else { pv = null; target = null; setTabs(S.role); view('sum'); } };

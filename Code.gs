@@ -154,15 +154,16 @@ function adminEmp(phone) { var u = findUser(phone) || {}; return myData(phone, u
 function head(me) { return me.role === 'head' || me.role === 'admin' ? null : out({ error: 'forbidden' }); }
 function headMonth(month) {
   var by = {}, res = [];
-  listUsers().forEach(function (u) { if (u.role === 'manager' && u.active) { by[u.phone] = { phone: u.phone, name: u.name, rev: 0, total: 0 }; res.push(by[u.phone]); } });
+  listUsers().forEach(function (u) {
+    if (!u.active || !gridFor(u.role)) return;
+    by[u.phone] = { phone: u.phone, name: u.name, role: u.role, rev: 0, total: 0, sales: null };
+    if (u.role === 'head') res.unshift(by[u.phone]); else res.push(by[u.phone]);
+  });
   var s = salesSheet(), n = s.getLastRow();
   if (n > 1) s.getRange(2, 1, n - 1, 4).getValues().forEach(function (r) {
     var p = String(r[0]); if (ms(r[1]) !== month || !by[p]) return;
     by[p].total = Number(r[3]) || 0;
-  });
-  if (n > 1) s.getRange(2, 1, n - 1, 3).getValues().forEach(function (r) {
-    var p = String(r[0]); if (ms(r[1]) !== month || !by[p]) return;
-    try { by[p].rev = calcSales(JSON.parse(r[2]), 'A').rev; } catch (e) {}
+    try { by[p].sales = JSON.parse(r[2]); by[p].rev = calcSales(by[p].sales, 'A').rev; } catch (e) {}
   });
   return { month: month, employees: res };
 }

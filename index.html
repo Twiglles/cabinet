@@ -413,11 +413,16 @@ async function loadSum() {
   const j = await api('adminMonth', { month: sel.value });
   cs(key, j); drawSum(j); loadLinks();
 }
+const LINKS0 = [
+  { t: 'Расчёт ЗП', u: 'https://docs.google.com/spreadsheets/d/1RnWWmu8SmCr5UaHSMD3okSrNurCukYrdUjJtfVaPe8o/edit' },
+  { t: 'Расчёт ЗП менеджеров по продажам', u: 'https://docs.google.com/spreadsheets/d/1Uq2GV73JSSOAY_cFO5KOcbMqppSsDPW1q1soG_sWYZw/edit' }
+];
 async function loadLinks() {
-  const c = ck('links'); if (c) drawLinks(c);
+  drawLinks(ck('links') || []);
   const j = await api('adminLinks'); if (j.links) { cs('links', j.links); drawLinks(j.links); }
 }
 function drawLinks(l) {
+  l = [...LINKS0, ...l.filter(x => !LINKS0.some(y => y.u === x.u))];
   $('lnk').classList.toggle('hide', !l.length);
   $('llist').innerHTML = l.map(x => `<a class="lk" href="${esc(x.u)}" target="_blank" rel="noopener noreferrer">${esc(x.t)}<span>↗</span></a>`).join('');
 }

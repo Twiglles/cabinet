@@ -134,6 +134,7 @@ table.sm{table-layout:auto;margin:0;width:100%}table.sm th,table.sm td{padding:5
   <div id="vEmp">
     <h2 class="step">1. Выберите месяц</h2>
     <div class="mnav"><button class="g" id="mprev" aria-label="Предыдущий месяц">‹</button><select id="msel" aria-label="Месяц"></select><button class="g" id="mnext" aria-label="Следующий месяц">›</button></div>
+    <h2 id="mgrt" class="step hide" style="margin-top:20px">2. Выберите менеджера</h2>
     <div id="mgrs" class="chips hide"></div>
     <div id="seg" class="hide"><button data-t="s" class="on">Продажи</button><button data-t="w">Другие должности</button></div>
     <div id="vSales" class="hide">
@@ -352,15 +353,15 @@ async function loadMgrs() {
 }
 function drawMgrs() {
   const head = (pv ? pv.role : S.role) === 'head';
-  $('mgrs').classList.toggle('hide', !head || !mgrList.length);
+  $('mgrs').classList.toggle('hide', !head || !mgrList.length); $('mgrt').classList.toggle('hide', !head || !mgrList.length);
   if (!head) return;
   const own = pv ? pv.phone : S.phone, on = target || own;
   $('mgrs').innerHTML = [{ phone: own, name: (pv ? pv.name : S.name) }, ...mgrList].map(x => `<button class="${x.phone === on ? 'on' : ''}" data-ph="${x.phone}" data-n="${esc(x.name)}">${esc(x.name.split(' ')[0])}</button>`).join('');
   $('mgrs').querySelectorAll('button').forEach(b => b.onclick = () => {
     if (b.dataset.ph === on) return;
     flush();
-    if (b.dataset.ph === own) { target = pv ? pv.phone : null; $('vEmp').classList.remove('sub'); $('ttl').textContent = pv ? pv.name : S.name; }
-    else { target = b.dataset.ph; tname = b.dataset.n; $('vEmp').classList.add('sub'); $('ttl').textContent = tname; }
+    if (b.dataset.ph === own) { target = pv ? pv.phone : null; $('vEmp').classList.remove('sub'); }
+    else { target = b.dataset.ph; tname = b.dataset.n; $('vEmp').classList.add('sub'); }
     $('imp').classList.toggle('hide', !pv); seg = 's'; loadMine();
   });
 }
@@ -386,7 +387,7 @@ const sEdit = () => { updSales(); total(); dirty(); };
 function updSales() {
   if (!grid) return;
   const d = curS(), c = calcS(d, gridM(cur)), list = gridM(cur) === 'B' ? TIERS.B : TIERS.A, top = list[list.length - 1][0], prev = c.i ? list[c.i - 1][0] : 0;
-  $('sh').textContent = 'Расчёт выплаты · ' + ({ KM: 'Ключевой менеджер по продажам', A: 'Младший менеджер по продажам', B: 'Менеджер-стажёр' }[gridM(cur)] || '');
+  $('sh').textContent = (isSub() ? tname + ' · ' : 'Расчёт выплаты · ') + ({ KM: 'Ключевой менеджер по продажам', A: 'Младший менеджер по продажам', B: 'Менеджер-стажёр' }[gridM(cur)] || '');
   $('stot').textContent = rub(c.total); $('srev').textContent = rub(c.rev); $('slvl').textContent = `${c.i + 1} из ${list.length}`;
   $('slp').style.width = (c.rev >= top ? 100 : Math.max(0, Math.min(100, (c.rev - prev) / (list[c.i][0] - prev) * 100))) + '%';
   $('snx').innerHTML = c.rev >= top ? 'Выше последнего уровня, применена максимальная ставка.' : `До следующего уровня ещё <b>${rub(list[c.i][0] - c.rev)}</b> выручки`;
@@ -497,7 +498,7 @@ function drawDep(j) {
   $('dbody').innerHTML = h;
   $('dbody').querySelectorAll('.dro').forEach(b => b.onclick = () => { target = b.dataset.ph; tname = b.dataset.name; cur = $('dm').value; seg = 's'; view2(); });
 }
-function view2() { $('vDep').classList.add('hide'); $('vEmp').classList.add('sub'); $('impb').textContent = '← Назад'; document.querySelectorAll('#atabs button').forEach(b => b.classList.remove('on')); $('vEmp').classList.remove('hide'); $('vSum').classList.add('hide'); $('vUsr').classList.add('hide'); $('imp').classList.remove('hide'); $('impn').textContent = tname; $('ttl').textContent = tname; loadMine(); }
+function view2() { $('vDep').classList.add('hide'); $('vEmp').classList.add('sub'); $('impb').textContent = '← Назад'; document.querySelectorAll('#atabs button').forEach(b => b.classList.remove('on')); $('vEmp').classList.remove('hide'); $('vSum').classList.add('hide'); $('vUsr').classList.add('hide'); $('imp').classList.remove('hide'); $('impn').textContent = tname; loadMine(); }
 $('impb').onclick = () => { if (isSub()) view('dep'); else { pv = null; target = null; setTabs(S.role); view('sum'); } };
 function ask(text, yes) {
   $('dt').textContent = text; $('dyes').textContent = yes || 'Да, закрыть'; $('dlg').classList.remove('hide');

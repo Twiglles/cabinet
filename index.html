@@ -95,6 +95,7 @@ details[open] .chev::after{transform:rotate(-135deg);top:9px}
 .mh{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:8px}.mh b{font-size:17px}.mh span{font-weight:800;font-size:17px}.mh span.mu{font-weight:400;font-size:13px}
 table.sm{table-layout:auto;margin:0;width:100%}table.sm th,table.sm td{padding:5px 4px;font-size:13px;text-align:center}table.sm th:first-child,table.sm td:first-child{text-align:left}table.sm .r,table.sm td.r{text-align:right}table.sm tr+tr td{border-top:1px solid var(--bd)}.dro{margin-top:10px;width:100%;padding:9px}
 .sst{font-size:13px;min-height:0;margin:-6px 0 8px}.sst:empty{display:none}
+.totop{width:100%;margin:8px 0 0;padding:12px;font-size:14px}
 .lk{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 12px;font-size:14px;border:1px solid var(--bd);border-radius:8px;background:var(--card2);color:var(--tx);text-decoration:none;font-weight:600;min-width:0}.lk:hover{border-color:var(--ach)}.lk span{color:var(--ac)}
 .imp{top:58px;flex-wrap:nowrap;padding:6px 6px 6px 12px;border-radius:10px;font-size:13px;margin-bottom:12px}.imp .it{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.imp button{padding:6px 11px;font-size:13px;flex:none}
 .bar{position:sticky;top:0;z-index:10;background:var(--card);border-bottom:1px solid var(--bd)}
@@ -181,6 +182,7 @@ table.sm{table-layout:auto;margin:0;width:100%}table.sm th,table.sm td{padding:5
     <button id="addu" class="addu">+ Добавить сотрудника</button>
     <div class="card"><h2>Список сотрудников</h2><p class="mu" style="margin:-4px 0 6px">Нажмите на сотрудника, чтобы изменить роль или сбросить пароль.</p><div id="ulist"></div></div>
   </div>
+  <button class="g totop" id="totop">↑ Вернуться наверх</button>
   <div id="usheet" class="dlg sheet hide"><div class="box">
     <h3 id="ut">Новый сотрудник</h3>
     <label class="fl" for="un">Имя и фамилия</label><input id="un" placeholder="Например, Анна Петрова" autocomplete="off">
@@ -550,6 +552,7 @@ $('us').onclick = async () => {
   } finally { $('us').disabled = false; $('us').textContent = 'Сохранить'; }
 };
 
+$('totop').onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 try { const s = localStorage.getItem('s') || sessionStorage.getItem('s'); if (s) S = JSON.parse(s); } catch (e) {}
 show();
 </script></body></html>

@@ -127,7 +127,7 @@ details[open] .chev::after{transform:rotate(-135deg);top:9px}
   <div id="err" class="er"></div>
   <div id="atabs" class="tabs hide"><button data-v="sum" data-r="admin" class="on">Все зарплаты</button><button data-v="usr" data-r="admin">Сотрудники</button><button data-v="me" data-r="admin head">Моя оплата</button><button data-v="dep" data-r="head">Отдел</button></div>
 
-  <div id="imp" class="imp hide"><span class="it">Просмотр: <b id="impn"></b></span><button class="g" id="impb">Выйти</button></div>
+  <div id="imp" class="imp hide"><span class="it">Просмотр: <b id="impn"></b></span><button class="g" id="impb">← Назад</button></div>
   <div id="vEmp">
     <h2 class="step">1. Выберите месяц</h2>
     <div class="mnav"><button class="g" id="mprev" aria-label="Предыдущий месяц">‹</button><select id="msel" aria-label="Месяц"></select><button class="g" id="mnext" aria-label="Следующий месяц">›</button></div>
@@ -264,7 +264,7 @@ $('pws').onclick = async () => {
 };
 document.querySelectorAll('#atabs button').forEach(b => b.onclick = () => view(b.dataset.v));
 function view(v) {
-  flush(); $('err').textContent = ''; $('imp').classList.toggle('hide', !pv); if (pv) { $('impn').textContent = pv.name; $('impb').textContent = 'Выйти'; } $('ttl').textContent = pv ? pv.name : S.name;
+  flush(); $('err').textContent = ''; $('imp').classList.toggle('hide', !pv); if (pv) { $('impn').textContent = pv.name; $('impb').textContent = '← Назад'; } $('ttl').textContent = pv ? pv.name : S.name;
   document.querySelectorAll('#atabs button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
   target = pv ? pv.phone : null; $('vEmp').classList.remove('sub'); $('vDep').classList.toggle('hide', v !== 'dep');
   $('vEmp').classList.toggle('hide', v !== 'me'); $('vSum').classList.toggle('hide', v !== 'sum'); $('vUsr').classList.toggle('hide', v !== 'usr');
@@ -464,7 +464,7 @@ function drawDep(j) {
   $('dlist').innerHTML = e.length ? e.map(x => `<button class="dr" data-ph="${x.phone}" data-name="${esc(x.name)}"><div><b>${esc(x.name)}</b><small>выручка ${rub(x.rev)}</small></div><div><b>${rub(x.total)}</b><small>ЗП</small></div></button>`).join('') : '<span class="mu">Менеджеров пока нет. Им должна быть назначена роль «Менеджер продаж» и включён доступ.</span>';
   $('dlist').querySelectorAll('.dr').forEach(b => b.onclick = () => { target = b.dataset.ph; tname = b.dataset.name; cur = $('dm').value; seg = 's'; view2(); });
 }
-function view2() { $('vDep').classList.add('hide'); $('vEmp').classList.add('sub'); $('impb').textContent = '← К списку'; document.querySelectorAll('#atabs button').forEach(b => b.classList.remove('on')); $('vEmp').classList.remove('hide'); $('vSum').classList.add('hide'); $('vUsr').classList.add('hide'); $('imp').classList.remove('hide'); $('impn').textContent = tname; $('ttl').textContent = tname; loadMine(); }
+function view2() { $('vDep').classList.add('hide'); $('vEmp').classList.add('sub'); $('impb').textContent = '← Назад'; document.querySelectorAll('#atabs button').forEach(b => b.classList.remove('on')); $('vEmp').classList.remove('hide'); $('vSum').classList.add('hide'); $('vUsr').classList.add('hide'); $('imp').classList.remove('hide'); $('impn').textContent = tname; $('ttl').textContent = tname; loadMine(); }
 $('impb').onclick = () => { if (isSub()) view('dep'); else { pv = null; target = null; setTabs(S.role); view('sum'); } };
 function ask(text, yes) {
   $('dt').textContent = text; $('dyes').textContent = yes || 'Да, закрыть'; $('dlg').classList.remove('hide');

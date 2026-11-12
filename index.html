@@ -29,7 +29,7 @@ button:disabled{opacity:.5;cursor:default}
 .tabs button{flex:0 0 auto;background:transparent;color:var(--tx);border:1px solid var(--bd);padding:9px 16px;font-size:14px;white-space:nowrap}
 .tabs button.on{background:var(--ac);border-color:var(--ac);color:#fff}
 table{width:calc(100% + 8px);margin:0 -4px;border-collapse:collapse}th{text-align:left;font:700 11px Montserrat,system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--ach);padding:4px}td{padding:4px}
-td.n,th.n{width:130px}td.d{width:44px}
+td.n,th.n{width:130px}th.p,td.p{width:30%}th.w,td.w{width:45%}td.d{width:44px}
 .tot{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid var(--bd);font:800 20px Montserrat,system-ui,sans-serif}
 .mu{color:var(--mu);font-size:13px}.er{color:var(--er)}.ok{color:var(--ok)}
 .row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1;min-width:140px}
@@ -159,7 +159,7 @@ button.totop,button.totop:hover{display:block;width:100%;margin:8px 0 0;padding:
     <div id="vWork">
     <h2 id="mt" class="step" style="margin-top:20px"></h2>
     <div class="card"><h2 id="mti" class="hide">Другие должности</h2><div id="ldm" class="mu">Загружаю данные…</div>
-      <table><thead><tr><th>Проект</th><th>Вид работы</th><th class="n">Сумма, ₽</th><th class="d"></th></tr></thead><tbody id="tb"></tbody></table>
+      <table><thead><tr><th class="p">Проект</th><th class="w">Вид работы</th><th class="n">Сумма, ₽</th><th class="d"></th></tr></thead><tbody id="tb"></tbody></table>
       <div class="row" style="margin-top:10px"><button class="g" id="add" style="flex:none">+ Строка</button></div>
       <div class="mu" id="st" style="margin-top:6px"></div>
     </div>

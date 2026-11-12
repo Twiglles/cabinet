@@ -379,7 +379,7 @@ function drawSales() {
   $('vSales').classList.toggle('hide', !grid || (tabs && seg !== 's')); $('vWork').classList.toggle('hide', tabs && seg !== 'w');
   document.querySelectorAll('#seg button').forEach(b => b.classList.toggle('on', b.dataset.t === seg));
   $('mt').classList.remove('hide'); $('mti').classList.add('hide');
-  $('mt').textContent = '2. Работы за ' + mlabel(cur).toLowerCase();
+  $('mt').textContent = ($('mgrt').classList.contains('hide') ? '2' : '3') + '. Работы за ' + mlabel(cur).toLowerCase();
   document.querySelectorAll('#seg button').forEach(b => b.classList.toggle('on', b.dataset.t === seg));
   if (!grid) return;
   const d = curS(), lk = locked();

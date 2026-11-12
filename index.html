@@ -359,7 +359,7 @@ async function loadMgrs() {
 }
 function drawMgrs() {
   const head = (pv ? pv.role : S.role) === 'head';
-  $('mgrs').classList.toggle('hide', !head || !mgrList.length); const sh2 = head && mgrList.length; $('mgrt').classList.toggle('hide', !sh2); $('mh').textContent = (sh2 ? '2' : '1') + '. Выберите месяц';
+  $('mgrs').classList.toggle('hide', !head || !mgrList.length); const sh2 = head && mgrList.length; $('mgrt').classList.toggle('hide', !sh2); $('mh').textContent = (sh2 ? '2' : '1') + '. Выберите месяц'; $('mt').textContent = (sh2 ? '3' : '2') + '. Работы за ' + mlabel(cur).toLowerCase();
   if (!head) return;
   const own = pv ? pv.phone : S.phone, on = target || own;
   $('mgrs').innerHTML = [{ phone: own, name: (pv ? pv.name : S.name) }, ...mgrList].map(x => `<button class="${x.phone === on ? 'on' : ''}" data-ph="${x.phone}" data-n="${esc(x.name)}">${esc(x.name.split(' ')[0])}</button>`).join('');
@@ -374,11 +374,11 @@ function drawMgrs() {
 const gridM = m => grid === 'KM' && m < '2026-08' ? 'A' : grid;
 const curS = () => sales[cur] || (sales[cur] = blankS());
 function drawSales() {
-  const tabs = !!grid && grid !== 'KM';
+  const tabs = !!grid && !isSub();
   $('seg').classList.toggle('hide', !tabs);
   $('vSales').classList.toggle('hide', !grid || (tabs && seg !== 's')); $('vWork').classList.toggle('hide', tabs && seg !== 'w');
   document.querySelectorAll('#seg button').forEach(b => b.classList.toggle('on', b.dataset.t === seg));
-  const inCard = !!grid && !tabs; $('mt').classList.toggle('hide', inCard); $('mti').classList.toggle('hide', !inCard);
+  $('mt').classList.remove('hide'); $('mti').classList.add('hide');
   $('mt').textContent = '2. Работы за ' + mlabel(cur).toLowerCase();
   document.querySelectorAll('#seg button').forEach(b => b.classList.toggle('on', b.dataset.t === seg));
   if (!grid) return;

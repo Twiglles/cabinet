@@ -15,8 +15,8 @@ body{margin:0;background:var(--bg);color:var(--tx);font:400 16px/1.5 Montserrat,
 h1{font:800 clamp(28px,8vw,40px)/1.05 Montserrat,sans-serif;margin:0}
 h1 mark{background:var(--ac);color:#fff;padding:0 .14em;border-radius:3px}
 h2{font:700 12px Montserrat,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--ach);margin:0 0 12px}
-input,select{width:100%;font:500 16px Montserrat,sans-serif;min-height:48px;padding:10px 12px;border:1px solid var(--bd);border-radius:4px;background:var(--card2);color:var(--tx)}
-input::placeholder{color:rgba(27,27,27,.35)}
+input,select,textarea{width:100%;font:500 16px Montserrat,sans-serif;min-height:48px;padding:10px 12px;border:1px solid var(--bd);border-radius:4px;background:var(--card2);color:var(--tx)}
+textarea{font:500 16px/1.35 Montserrat,sans-serif;min-height:48px;padding:12px;border:1px solid var(--bd);border-radius:4px;background:var(--card2);color:var(--tx);resize:none;overflow:hidden;display:block}textarea:focus{outline:none;border-color:var(--ach);box-shadow:0 0 0 1px var(--ach)}textarea::placeholder,input::placeholder{color:rgba(27,27,27,.35)}
 input:focus,select:focus{outline:none;border-color:var(--ach);box-shadow:0 0 0 1px var(--ach)}
 select{appearance:none;padding-right:36px;background-image:linear-gradient(45deg,transparent 50%,var(--tx) 50%),linear-gradient(135deg,var(--tx) 50%,transparent 50%);background-position:calc(100% - 20px) 50%,calc(100% - 15px) 50%;background-size:5px 5px;background-repeat:no-repeat}
 button{font:700 15px Montserrat,sans-serif;padding:11px 16px;border-radius:4px;border:1px solid var(--ac);background:var(--ac);color:#fff;cursor:pointer;transition:background .15s,border-color .15s}
@@ -76,9 +76,10 @@ details[open] .chev::after{transform:rotate(-135deg);top:9px}
   .top .row{width:100%}.top .row button{padding:10px 8px;font-size:14px}
   .row>*{min-width:100%}.top .row>*{min-width:0}
   table{width:100%;margin:0}thead{display:none}
-  #tb tr{display:grid;grid-template-columns:1fr 112px 44px;gap:8px;padding:12px 0;border-top:1px solid var(--bd)}
+  #tb tr{display:grid;grid-template-columns:1fr 112px 44px;grid-template-areas:"w w w" "p n d";gap:8px;padding:12px 0;border-top:1px solid var(--bd)}
+  #tb td.w{grid-area:w}#tb td.p{grid-area:p}#tb td.n{grid-area:n}#tb td.d{grid-area:d}
   #tb tr:first-child{border-top:0;padding-top:0}
-  #tb td{padding:0;width:auto}#tb td.p{grid-column:1/-1}#tb td.d{display:flex;align-items:center;justify-content:center}
+  #tb td{padding:0;width:auto}#tb td.d{display:flex;align-items:center;justify-content:center}
   #tb td.n input{text-align:right}
   .tot{font-size:18px}
 }
@@ -310,17 +311,20 @@ $('msel').onchange = () => { flush(); cur = $('msel').value; drawMonth(); };
 $('mprev').onclick = () => step($('msel'), 1); $('mnext').onclick = () => step($('msel'), -1);
 $('aprev').onclick = () => step($('am'), 1); $('anext').onclick = () => step($('am'), -1);
 const locked = () => S.role !== 'admin' && !S.editPast && cur < nowM();
+const growAll = () => { const g = () => $('tb').querySelectorAll('textarea').forEach(grow); g(); requestAnimationFrame(g); setTimeout(g, 300); };
+const grow = t => { t.style.height = 'auto'; t.style.height = t.scrollHeight + 2 + 'px'; };
 function drawMonth() {
   $('mt').textContent = '2. Работы за ' + mlabel(cur).toLowerCase() ;
   const rows = data[cur] && data[cur].length ? data[cur] : [{ p: '', w: '', a: '' }];
   data[cur] = rows;
-  $('tb').innerHTML = rows.map((r, i) => `<tr><td class="p"><input data-i="${i}" data-k="p" value="${esc(r.p)}" placeholder="Название проекта"></td>
-    <td class="w"><input data-i="${i}" data-k="w" value="${esc(r.w)}" placeholder="Вид работы"></td>
+  $('tb').innerHTML = rows.map((r, i) => `<tr><td class="p"><input data-i="${i}" data-k="p" value="${esc(r.p)}" placeholder="Проект"></td>
+    <td class="w"><textarea rows="1" data-i="${i}" data-k="w" placeholder="Вид работы">${esc(r.w)}</textarea></td>
     <td class="n"><input data-i="${i}" data-k="a" inputmode="decimal" value="${esc(fin(r.a))}" placeholder="Сумма, ₽"></td>
     <td class="d"><button class="x" data-del="${i}">✕</button></td></tr>`).join('');
   const lk = locked();
-  $('tb').querySelectorAll('input').forEach(inp => { inp.disabled = lk; inp.oninput = () => { data[cur][+inp.dataset.i][inp.dataset.k] = inp.dataset.k === 'a' ? fmtInput(inp) : inp.value; total(); dirty(); }; });
+  $('tb').querySelectorAll('input,textarea').forEach(inp => { inp.disabled = lk; inp.oninput = () => { if (inp.tagName === 'TEXTAREA') grow(inp); data[cur][+inp.dataset.i][inp.dataset.k] = inp.dataset.k === 'a' ? fmtInput(inp) : inp.value; total(); dirty(); }; });
   $('tb').querySelectorAll('[data-del]').forEach(b => { b.disabled = lk; b.onclick = async () => { const r = data[cur][+b.dataset.del]; if ((r.p || r.w || num(r.a)) && !(await ask('Удалить эту строку?', 'Да, удалить'))) return; data[cur].splice(+b.dataset.del, 1); drawMonth(); dirty(); }; });
+  growAll();
   $('add').disabled = lk; setSt(lk ? 'Этот месяц закрыт для правок' : '', 'mu'); drawSales(); total(); drawMgrs();
 }
 const fin = v => { v = String(v ?? '').replace(/[^\d,.\-]/g, '').replace('.', ','); let [i, d] = v.split(','); const neg = i.startsWith('-'); i = i.replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, ' '); return (neg ? '-' : '') + i + (d !== undefined ? ',' + d.replace(/\D/g, '').slice(0, 2) : ''); };
@@ -554,6 +558,7 @@ $('us').onclick = async () => {
   } finally { $('us').disabled = false; $('us').textContent = 'Сохранить'; }
 };
 
+addEventListener('resize', () => $('tb').querySelectorAll('textarea').forEach(grow));
 $('totop').onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 try { const s = localStorage.getItem('s') || sessionStorage.getItem('s'); if (s) S = JSON.parse(s); } catch (e) {}
 show();

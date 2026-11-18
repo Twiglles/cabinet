@@ -55,7 +55,7 @@ details{border-top:1px solid var(--bd);padding:12px 0}summary{cursor:pointer;dis
 h2.step{margin:0 0 8px}
 .mnav select,.mnav button.g{background-color:var(--card)}
 .mnav{display:grid;grid-template-columns:52px 1fr 52px;gap:8px;margin-bottom:16px}
-.mnav button{padding:0;min-height:48px;font-size:26px;line-height:1}.mnav select{font-weight:700;font-size:17px;text-align:center;text-align-last:center}
+.mnav button{padding:0;min-height:48px;display:flex;align-items:center;justify-content:center}.mnav select{font-weight:700;font-size:17px;text-align:center;text-align-last:center}
 .big{font:800 clamp(32px,9vw,44px)/1.05 Montserrat,system-ui,sans-serif;margin:2px 0 14px}
 .st{display:grid;grid-template-columns:1fr 1fr;gap:10px}.st>div{border:1px solid var(--bd);border-radius:4px;padding:10px 12px;background:var(--card2)}.st small{display:block;color:var(--mu);font-size:12px}.st b{font-size:17px}
 summary{align-items:center;flex-wrap:wrap;list-style:none}.det{flex:0 0 100%;margin-top:2px}.pr{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:2px 0}#alist details:first-child{border-top:0;padding-top:0}summary::-webkit-details-marker{display:none}summary .nm{font-weight:800;font-size:17px}
@@ -141,7 +141,7 @@ button.totop,button.totop:hover{display:block;width:100%;margin:8px 0 0;padding:
     <h2 id="mgrt" class="step hide">1. Выберите менеджера</h2>
     <div id="mgrs" class="chips hide"></div>
     <h2 class="step" id="mh">1. Выберите месяц</h2>
-    <div class="mnav"><button class="g" id="mprev" aria-label="Предыдущий месяц">‹</button><select id="msel" aria-label="Месяц"></select><button class="g" id="mnext" aria-label="Следующий месяц">›</button></div>
+    <div class="mnav"><button class="g" id="mprev" aria-label="Предыдущий месяц"><svg width="10" height="16" viewBox="0 0 10 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2 2 8l6 6"/></svg></button><select id="msel" aria-label="Месяц"></select><button class="g" id="mnext" aria-label="Следующий месяц"><svg width="10" height="16" viewBox="0 0 10 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m2 2 6 6-6 6"/></svg></button></div>
         <div id="seg" class="hide"><button data-t="s" class="on">Продажи</button><button data-t="w">Другие должности</button></div>
     <div id="vSales" class="hide">
       <div class="card"><h2 id="sh">Расчёт продаж</h2><div id="sst" class="sst"></div><div class="big" id="stot">0 ₽</div>
@@ -170,7 +170,7 @@ button.totop,button.totop:hover{display:block;width:100%;margin:8px 0 0;padding:
 
   <div id="vSum" class="hide">
     <h2 class="step">Выберите месяц</h2>
-    <div class="mnav"><button class="g" id="aprev" aria-label="Предыдущий месяц">‹</button><select id="am" aria-label="Месяц"></select><button class="g" id="anext" aria-label="Следующий месяц">›</button></div>
+    <div class="mnav"><button class="g" id="aprev" aria-label="Предыдущий месяц"><svg width="10" height="16" viewBox="0 0 10 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2 2 8l6 6"/></svg></button><select id="am" aria-label="Месяц"></select><button class="g" id="anext" aria-label="Следующий месяц"><svg width="10" height="16" viewBox="0 0 10 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m2 2 6 6-6 6"/></svg></button></div>
     <div class="card" id="gtc"><h2>Всего за месяц</h2><div id="gt"></div></div>
     <p class="mu" style="margin:0 0 10px">Нажмите на сотрудника, чтобы раскрыть детали и выплаты</p>
     <div id="alist"></div>
@@ -178,7 +178,7 @@ button.totop,button.totop:hover{display:block;width:100%;margin:8px 0 0;padding:
 
   <div id="vDep" class="hide">
     <h2 class="step">Выберите месяц</h2>
-    <div class="mnav"><button class="g" id="dprev" aria-label="Предыдущий месяц">‹</button><select id="dm" aria-label="Месяц"></select><button class="g" id="dnext" aria-label="Следующий месяц">›</button></div>
+    <div class="mnav"><button class="g" id="dprev" aria-label="Предыдущий месяц"><svg width="10" height="16" viewBox="0 0 10 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2 2 8l6 6"/></svg></button><select id="dm" aria-label="Месяц"></select><button class="g" id="dnext" aria-label="Следующий месяц"><svg width="10" height="16" viewBox="0 0 10 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m2 2 6 6-6 6"/></svg></button></div>
     <div id="dbody"></div>
   </div>
   <div id="vUsr" class="hide">

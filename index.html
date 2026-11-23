@@ -149,8 +149,8 @@ button.totop,button.totop:hover{display:block;width:100%;margin:8px 0 0;padding:
 .wt thead{display:none}.wt,.wt tbody{display:block;width:100%;margin:0}
 #tb tr.r2{display:block;position:relative;overflow:hidden;padding:0;border:0;border-bottom:1px solid var(--bd)}#tb tr.r2:last-child{border-bottom:0}
 #tb tr.r2 td{display:block;padding:0;width:auto}
-#tb tr.r2.aok{background:var(--okbg);border-radius:12px;border-bottom:0;margin:8px 0}#tb tr.r2.aok .sm{padding:10px 14px}
-.sm{display:grid;grid-template-columns:1fr auto;gap:2px 12px;align-items:center;padding:10px 0;min-height:60px}
+#tb tr.r2{box-shadow:none;border-radius:12px}#tb tr.r2.aok{background:var(--okbg);border-bottom:0;margin:8px 0}#tb tr.r2.swp{border:1px solid var(--bd);margin:8px 0;background:var(--card)}#tb tr.r2.swp:last-child{border-bottom:1px solid var(--bd)}
+.sm{display:grid;grid-template-columns:1fr auto;gap:2px 12px;align-items:center;padding:10px 14px;min-height:60px}
 .sm .p{font-weight:700;font-size:15px;line-height:1.25;min-width:0}.sm .w{font-size:13px;color:var(--mu);line-height:1.25;grid-column:1}
 .sm .s{grid-column:2;grid-row:1;font-weight:800;font-size:15px;white-space:nowrap;text-align:right}
 .sm .act{grid-column:2;grid-row:2;justify-self:end;display:flex;align-items:center}
@@ -161,7 +161,7 @@ button.totop,button.totop:hover{display:block;width:100%;margin:8px 0 0;padding:
 .ed .amt input{border:0;box-shadow:none;background:transparent;text-align:right;font:800 17px Montserrat,sans-serif;padding:0;min-height:46px}.ed .amt input:focus{box-shadow:none;border:0}
 .amt span{font:800 17px Montserrat,sans-serif;color:var(--mu);margin-left:6px}
 .ed .go{width:100%;min-height:48px;font-size:15px}.ed .dl{border:0;background:none;color:var(--er);font:700 13px Montserrat,sans-serif;min-height:44px;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}.ed .dl:hover{background:none}
-tr.swp .delbg{position:absolute;left:0;right:0;top:0;bottom:0;background:#b3261e;display:flex;justify-content:flex-end}
+tr.swp:not(.opened):not(.drag) .delbg{visibility:hidden}tr.swp .delbg{position:absolute;left:0;right:0;top:0;bottom:0;background:#b3261e;display:flex;justify-content:flex-end}
 tr.swp .dtap{width:96px;border:0;border-radius:0;background:transparent;color:#fff;font:700 14px Montserrat,sans-serif;padding:0}
 tr.swp .slide{position:relative;background:var(--card);transition:transform .22s ease;touch-action:pan-y;user-select:none;-webkit-user-select:none}
 tr.swp.opened .slide{transform:translateX(-96px)}tr.swp.drag .slide{transition:none}

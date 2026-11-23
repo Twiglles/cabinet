@@ -137,6 +137,11 @@ tr.done td.dn{display:grid;grid-template-columns:1fr auto 24px;gap:2px 10px;alig
 .dn .t{font-size:14px;line-height:1.25;min-width:0}.dn .t b{display:block;font-weight:700;font-size:15px}.dn .t small{display:block;color:var(--mu);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dn .s{font-weight:800;white-space:nowrap}
 .dn .mk{width:22px;height:22px;border-radius:50%;background:var(--ok);color:#fff;display:flex;align-items:center;justify-content:center}.dn .mk svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
 @media(max-width:560px){#tb tr.done{display:block;padding:4px 0}}
+
+.pamt{display:flex;align-items:center;background:var(--card2);border:1px solid var(--bd);border-radius:12px;padding:0 14px;min-height:64px}.pamt:focus-within{border-color:var(--ach);box-shadow:0 0 0 1px var(--ach)}
+.pamt input{border:0;background:transparent;box-shadow:none;font:800 30px Montserrat,sans-serif;text-align:right;min-height:60px;padding:0;min-width:0}.pamt input:focus{box-shadow:none}.pamt span{font:800 24px Montserrat,sans-serif;color:var(--mu);margin-left:8px}
+.dchip{position:relative;display:inline-flex;align-items:center;gap:6px;margin-top:10px;min-height:44px;padding:0 16px;border-radius:22px;background:var(--card2);border:1px solid var(--bd);font:700 14px Montserrat,sans-serif;overflow:hidden}
+.dchip input{position:absolute;inset:0;width:100%;height:100%;min-height:0;opacity:0;font-size:16px;padding:0;border:0}
 </style></head><body>
 <header class="bar hide" id="bar"><div class="in"><span class="brand">Twiglles</span>
 <div class="menu"><button class="g" id="mbtn" aria-haspopup="true">Меню ▾</button>
@@ -226,6 +231,15 @@ tr.done td.dn{display:grid;grid-template-columns:1fr auto 24px;gap:2px 10px;alig
   </div></div>
 </div>
 </div>
+<div id="psheet" class="dlg sheet hide"><div class="box">
+  <h3>Новая выплата</h3><div class="mu" id="pnm" style="margin-bottom:12px"></div>
+  <div class="pamt"><input id="pa" inputmode="numeric" placeholder="0" autocomplete="off" aria-label="Сумма"><span>₽</span></div>
+  <label class="dchip"><span id="pdl">Сегодня</span><input id="pd" type="date" aria-label="Дата"></label>
+  <input id="pc" placeholder="Комментарий (необязательно)" autocomplete="off" style="margin-top:10px">
+  <p id="pe" class="er" style="margin:8px 0 0"></p>
+  <button id="pgo" class="go" style="width:100%;margin-top:12px;min-height:52px">Выплатить</button>
+  <button id="pcl" class="g" style="width:100%;margin-top:8px">Отмена</button>
+</div></div>
 <div id="dlg" class="dlg hide"><div class="box"><p id="dt"></p><div class="row"><button class="g" id="dno">Отмена</button><button id="dyes">Да, закрыть</button></div></div></div>
 <script>
 const API = 'https://script.google.com/macros/s/AKfycbxLZjrCJ_-ta8eU5NMERKij92S5amhj4pfKGOxrmwjVSPz0KjO8t-9m-b_On4yNY1H9/exec';
@@ -509,9 +523,7 @@ function drawSum(j) {
   const cntk = x => x.rows.filter(r => r.k).length;
   $('alist').innerHTML = e.length ? e.map(x => `<details data-ph="${x.phone}"${opened.has(x.phone) ? ' open' : ''}><summary><span class="nm">${esc(x.name)}</span><b>${rub(x.total)}</b><i class="chev"></i><span class="mu det"><span>выплачено ${rub(x.paid)} · осталось ${rub(x.total - x.paid)}</span>${x.rows.length ? `<button class="apv${cntk(x) === x.rows.length ? ' on' : cntk(x) ? ' part' : ''}" data-apall="${x.phone}">${cntk(x) === x.rows.length ? CKI : '<i></i>'}Согласовано <b>${cntk(x)} из ${x.rows.length}</b></button>` : ''}</span></summary>
     <div class="dtl"><div class="sec"><span>Записи</span>${x.rows.length ? `<button class="sa" data-apall="${x.phone}">${cntk(x) === x.rows.length ? 'Снять все' : 'Согласовать все'}</button>` : ''}</div>${x.sales != null ? `<div class="rec"><div class="t">Продажи<small>расчёт менеджера</small></div><div class="s">${rub(x.sales)}</div><span></span></div>` : ''}${x.rows.map((r, i) => `<div class="rec${r.k ? ' aok' : ''}"><div class="t">${esc(r.p)}<small>${esc(r.w)}</small></div><div class="s">${rub(r.a)}</div><button class="c" data-ap="${x.phone}" data-i="${i}" aria-label="Согласовать">${CKI}</button></div>`).join('') || (x.sales != null ? '' : '<div class="mu" style="padding:6px 0">Записей нет</div>')}
-    <div class="sec"><span>Выплаты</span></div>${x.pays.map(p => `<div class="pp adm"><div class="d">${fd(p.d)}</div><div class="n${p.n ? '' : ' e'}">${p.n ? esc(p.n) : 'без комментария'}</div><div class="a">+${rub(p.a)}</div><button class="x" data-delpay="${esc(p.id)}" aria-label="Удалить">✕</button></div>`).join('') || '<div class="mu" style="padding:6px 0">Выплат пока не было</div>'}
-    <button class="padd" data-pf="${x.phone}">+ Выплата</button>
-    <div class="pf" id="pf${x.phone}"><input data-pa="${x.phone}" inputmode="decimal" placeholder="Сумма, ₽"><input data-pd="${x.phone}" type="date" value="${new Date().toISOString().slice(0, 10)}"><input class="cm" data-pn="${x.phone}" placeholder="Комментарий"><button class="go" data-addpay="${x.phone}">Выплатить</button></div>
+    <div class="sec"><span>Выплаты</span><button class="sa" data-padd="${x.phone}" data-pname="${esc(x.name)}">+ Выплата</button></div>${x.pays.map(p => `<div class="pp adm"><div class="d">${fd(p.d)}</div><div class="n${p.n ? '' : ' e'}">${p.n ? esc(p.n) : 'без комментария'}</div><div class="a">+${rub(p.a)}</div><button class="x" data-delpay="${esc(p.id)}" aria-label="Удалить">✕</button></div>`).join('') || '<div class="mu" style="padding:6px 0">Выплат пока не было</div>'}
     <button class="g open" data-edit="${x.phone}" data-role="${esc(x.role)}" data-name="${esc(x.name)}">Открыть кабинет сотрудника</button></div></details>`).join('') : '<span class="mu">Сотрудников пока нет</span>';
   const setK = async (ph, idx, v) => {
     const emp = e.find(z => z.phone === ph); (idx < 0 ? emp.rows : [emp.rows[idx]]).forEach(r => r.k = v ? 1 : 0);
@@ -521,16 +533,28 @@ function drawSum(j) {
   };
   $('alist').querySelectorAll('[data-ap]').forEach(b => b.onclick = () => { const emp = e.find(z => z.phone === b.dataset.ap), i = +b.dataset.i; setK(b.dataset.ap, i, emp.rows[i].k ? 0 : 1); });
   $('alist').querySelectorAll('[data-apall]').forEach(b => b.onclick = ev => { ev.preventDefault(); ev.stopPropagation(); const emp = e.find(z => z.phone === b.dataset.apall); setK(emp.phone, -1, cntk(emp) === emp.rows.length ? 0 : 1); });
-  $('alist').querySelectorAll('[data-pf]').forEach(b => b.onclick = () => { const f = $('pf' + b.dataset.pf); f.classList.toggle('on'); if (f.classList.contains('on')) f.querySelector('input').focus(); });
-  $('alist').querySelectorAll('[data-addpay]').forEach(b => b.onclick = async () => {
-    const ph = b.dataset.addpay, q = k => $('alist').querySelector(`[data-${k}="${ph}"]`);
-    const j = await api('adminAddPay', { phone: ph, month: sel.value, amount: q('pa').value, date: q('pd').value, note: q('pn').value });
-    if (j.error) { $('err').textContent = 'Укажите сумму выплаты больше нуля'; return; }
-    $('err').textContent = ''; loadSum();
-  });
+  $('alist').querySelectorAll('[data-padd]').forEach(b => b.onclick = () => openPay(b.dataset.padd, b.dataset.pname));
   $('alist').querySelectorAll('[data-delpay]').forEach(b => b.onclick = async () => { await api('adminDelPay', { id: b.dataset.delpay }); loadSum(); });
   $('alist').querySelectorAll('[data-edit]').forEach(b => b.onclick = () => { cur = sel.value; startPreview(b.dataset.edit, b.dataset.name, b.dataset.role); });
 }
+
+let payPh = '';
+function openPay(ph, name) {
+  payPh = ph; $('pnm').textContent = name; $('pa').value = ''; $('pc').value = ''; $('pe').textContent = '';
+  $('pd').value = new Date().toISOString().slice(0, 10); setPd(); $('psheet').classList.remove('hide'); setTimeout(() => $('pa').focus(), 60);
+}
+function setPd() { const v = $('pd').value, t = new Date().toISOString().slice(0, 10), m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v); $('pdl').textContent = v === t ? 'Сегодня' : m ? m[3] + '.' + m[2] + '.' + m[1] : 'Дата'; }
+$('pd').onchange = setPd; $('pa').oninput = () => fmtInput($('pa'));
+$('pcl').onclick = () => $('psheet').classList.add('hide');
+$('psheet').onclick = e => { if (e.target === $('psheet')) $('psheet').classList.add('hide'); };
+$('pgo').onclick = async () => {
+  const a = num($('pa').value); if (!(a > 0)) { $('pe').textContent = 'Укажите сумму больше нуля'; return; }
+  $('pgo').disabled = true;
+  const j = await api('adminAddPay', { phone: payPh, month: $('am').value, amount: String(a), date: $('pd').value, note: $('pc').value });
+  $('pgo').disabled = false;
+  if (j.error) { $('pe').textContent = 'Не удалось сохранить выплату'; return; }
+  $('psheet').classList.add('hide'); loadSum();
+};
 async function loadDep() {
   const sel = $('dm'); if (!sel.options.length) { sel.innerHTML = monthList().map(m => `<option value="${m}">${mlabel(m)}</option>`).join(''); sel.value = nowM(); sel.onchange = loadDep; $('dprev').onclick = () => step(sel, 1); $('dnext').onclick = () => step(sel, -1); }
   const key = 'd' + sel.value, c = ck(key);

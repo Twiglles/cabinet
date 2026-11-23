@@ -38,7 +38,7 @@ details{border-top:1px solid var(--bd);padding:12px 0}summary{cursor:pointer;dis
 .ur{cursor:pointer;-webkit-tap-highlight-color:transparent}.ur:hover b{color:var(--ach)}
 .addu{width:100%;margin-bottom:16px;padding:14px;font-size:16px}
 .fl{display:block;font:600 13px Montserrat,system-ui,sans-serif;color:var(--mu);margin:12px 0 6px}
-.sheet .box{max-height:92vh;overflow:auto}.sheet h3{margin:0 0 4px;font:800 20px Montserrat,system-ui,sans-serif}.sheet .row>*{min-width:0}
+.xc{position:absolute;top:10px;right:10px;width:44px;height:44px;min-height:0;padding:0;border:0;background:none;color:var(--mu);font-size:20px;line-height:1}.xc:hover{background:none}.sheet .box{max-height:92vh;overflow:auto}.sheet h3{margin:0 0 4px;font:800 20px Montserrat,system-ui,sans-serif}.sheet .row>*{min-width:0}
 @media(max-width:560px){.dlg.sheet{align-items:flex-end;padding:0}.dlg.sheet .box{max-width:none;border-radius:16px 16px 0 0;padding:20px 16px calc(20px + env(safe-area-inset-bottom))}}
 .imp{position:sticky;top:58px;z-index:9;background:#fbeaea;border:1px solid rgba(140,14,14,.25);border-radius:12px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;font-size:14px}.imp.hide{display:none}.imp button{padding:8px 12px;font-size:13px}
 .spin{display:inline-block;width:14px;height:14px;margin-right:10px;vertical-align:-2px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
@@ -258,8 +258,8 @@ tr.swp.opened .slide{transform:translateX(-96px)}tr.swp.drag .slide{transition:n
   </div></div>
 </div>
 </div>
-<div id="rsheet" class="dlg sheet hide"><div class="box">
-  <h3 id="rt">Новая работа</h3>
+<div id="rsheet" class="dlg sheet hide"><div class="box" style="position:relative">
+  <button id="rcl" class="xc" aria-label="Закрыть">✕</button><h3 id="rt">Новая работа</h3>
   <div class="ed"><input id="rp" placeholder="Проект" autocomplete="off"><textarea id="rw" rows="1" placeholder="Вид работы"></textarea><div class="amt"><input id="ra" inputmode="decimal" placeholder="0" autocomplete="off" aria-label="Сумма"><span>₽</span></div></div>
   <p id="re" class="er" style="margin:8px 0 0"></p>
   <button id="rgo" class="go" style="width:100%;margin-top:12px;min-height:52px">Готово</button>
@@ -589,6 +589,7 @@ function openRow(i) {
 }
 $('rw').oninput = () => grow($('rw')); $('ra').oninput = () => { fmtInput($('ra')); $('re').textContent = ''; }; $('rp').oninput = () => { $('re').textContent = ''; };
 $('rsheet').onclick = e => { if (e.target === $('rsheet')) $('rsheet').classList.add('hide'); };
+$('rcl').onclick = () => $('rsheet').classList.add('hide');
 $('rdel').onclick = () => { $('rsheet').classList.add('hide'); delRow(rIdx); };
 $('rgo').onclick = () => {
   const r = { p: $('rp').value, w: $('rw').value, a: fmtInput($('ra')) };

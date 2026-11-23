@@ -13,7 +13,7 @@ function sh(name, head) {
 }
 var USERS_H = ['phone', 'name', 'role', 'salt', 'hash', 'active', 'must', 'rate'];
 var RATES = ['A', 'B', 'KM'];
-var ROWS_H = ['phone', 'month', 'project', 'work', 'amount', 'updatedAt'];
+var ROWS_H = ['phone', 'month', 'project', 'work', 'amount', 'updatedAt', 'ok'];
 var PAY_H = ['id', 'phone', 'month', 'amount', 'date', 'note'];
 function paysSheet() { return sh('Выплаты', PAY_H); }
 var SESS_H = ['hash', 'phone', 'exp'];
@@ -83,7 +83,7 @@ function users() {
   if (s.getRange(1, 8).getValue() !== 'rate') s.getRange(1, 8).setValue('rate');
   return s;
 }
-function rows() { return sh('Записи', ROWS_H); }
+function rows() { var s = sh('Записи', ROWS_H); if (s.getMaxColumns() < 7) s.insertColumnsAfter(s.getMaxColumns(), 7 - s.getMaxColumns()); if (String(s.getRange(1, 7).getValue()) !== 'ok') s.getRange(1, 7).setValue('ok'); return s; }
 function ms(v) { return v instanceof Date ? Utilities.formatDate(v, SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone(), 'yyyy-MM') : String(v); }
 
 function normPhone(p) {
@@ -124,7 +124,7 @@ function doGet() { return out({ ok: true, app: 'kabinet', adminSet: users().getL
 
 function doPost(e) {
   var b; try { b = JSON.parse(e.postData.contents); } catch (x) { return out({ error: 'bad' }); }
-  var W = { logout: 1, adminAddPay: 1, adminDelPay: 1, saveMonth: 1, saveSales: 1, changePassword: 1, adminSaveUser: 1 }, lock = null;
+  var W = { logout: 1, adminApprove: 1, adminAddPay: 1, adminDelPay: 1, saveMonth: 1, saveSales: 1, changePassword: 1, adminSaveUser: 1 }, lock = null;
   if (W[b.action]) { lock = LockService.getScriptLock(); lock.waitLock(20000); }
   try {
     if (b.action === 'login') return out(login(b));
@@ -143,6 +143,7 @@ function doPost(e) {
       case 'adminLinks': return admin(me) || out({ links: adminLinks() });
       case 'adminUsers': return admin(me) || out({ users: listUsers() });
       case 'adminAddPay': return admin(me) || out(adminAddPay(b));
+      case 'adminApprove': return admin(me) || out(adminApprove(b));
       case 'adminDelPay': return admin(me) || out(adminDelPay(b));
       case 'adminSaveUser': return admin(me) || out(adminSaveUser(b));
       case 'adminEmployeeMonths': return admin(me) || out(adminEmp(normPhone(b.phone)));
@@ -222,9 +223,9 @@ function auth(t) {
 function myMonths(phone) {
   var s = rows(), n = s.getLastRow(), res = {};
   if (n < 2) return res;
-  s.getRange(2, 1, n - 1, 5).getValues().forEach(function (r) {
+  s.getRange(2, 1, n - 1, 7).getValues().forEach(function (r) {
     if (String(r[0]) !== phone) return;
-    (res[ms(r[1])] = res[ms(r[1])] || []).push({ p: r[2], w: r[3], a: Number(r[4]) || 0 });
+    (res[ms(r[1])] = res[ms(r[1])] || []).push({ p: r[2], w: r[3], a: Number(r[4]) || 0, k: r[6] ? 1 : 0 });
   });
   return res;
 }
@@ -253,27 +254,47 @@ function adminDelPay(b) {
 }
 function curMonth() { return Utilities.formatDate(new Date(), 'Europe/Moscow', 'yyyy-MM'); }
 function saveMonth(me, b) {
-  var phone = me.phone, month = String(b.month || '');
-  if (me.role === 'admin' && b.phone) phone = normPhone(b.phone);
+  var phone = me.phone, month = String(b.month || ''), isAdm = me.role === 'admin';
+  if (isAdm && b.phone) phone = normPhone(b.phone);
   if (!/^\d{4}-\d{2}$/.test(month)) return { error: 'bad month' };
-  if (me.role !== 'admin' && !EDIT_PAST_MONTHS && month < curMonth()) return { error: 'past locked' };
-  var s = rows(), n = s.getLastRow();
+  if (!isAdm && !EDIT_PAST_MONTHS && month < curMonth()) return { error: 'past locked' };
+  var s = rows(), n = s.getLastRow(), oldOk = [];
   if (n > 1) {
-    var v = s.getRange(2, 1, n - 1, 2).getValues();
-    for (var i = v.length - 1; i >= 0; i--) if (String(v[i][0]) === phone && ms(v[i][1]) === month) s.deleteRow(i + 2);
+    var v = s.getRange(2, 1, n - 1, 7).getValues();
+    for (var i = v.length - 1; i >= 0; i--) if (String(v[i][0]) === phone && ms(v[i][1]) === month) {
+      if (v[i][6]) oldOk.push({ p: String(v[i][2]), w: String(v[i][3]), a: Number(v[i][4]) || 0 });
+      s.deleteRow(i + 2);
+    }
+    oldOk.reverse();
   }
   var now = Date.now(), add = [];
   (b.rows || []).slice(0, 200).forEach(function (r) {
     var a = Number(String(r.a).replace(',', '.')) || 0;
     if (!r.p && !r.w && !a) return;
-    add.push([phone, month, String(r.p || '').slice(0, 200), String(r.w || '').slice(0, 200), a, now]);
+    var p = String(r.p || '').slice(0, 200), w = String(r.w || '').slice(0, 200), ok = 0;
+    for (var j = 0; j < oldOk.length; j++) if (oldOk[j].p === p && oldOk[j].w === w && oldOk[j].a === a) { ok = 1; oldOk.splice(j, 1); break; }
+    add.push([phone, month, p, w, a, now, ok]);
   });
+  if (!isAdm) oldOk.forEach(function (o) { add.push([phone, month, o.p, o.w, o.a, now, 1]); });
   if (add.length) {
     var start = s.getLastRow() + 1;
     s.getRange(start, 1, add.length, 2).setNumberFormat('@');
-    s.getRange(start, 1, add.length, 6).setValues(add);
+    s.getRange(start, 1, add.length, 7).setValues(add);
   }
   return { saved: add.length };
+}
+function adminApprove(b) {
+  var phone = normPhone(b.phone), month = String(b.month || ''), val = b.value ? 1 : 0, idx = b.idx == null ? -1 : Number(b.idx);
+  var s = rows(), n = s.getLastRow(), j = 0, cnt = 0;
+  if (n < 2) return { ok: 0, total: 0 };
+  var v = s.getRange(2, 1, n - 1, 7).getValues();
+  for (var i = 0; i < v.length; i++) if (String(v[i][0]) === phone && ms(v[i][1]) === month) {
+    if (idx < 0 || idx === j) s.getRange(i + 2, 7).setValue(val);
+    j++;
+  }
+  v = s.getRange(2, 1, n - 1, 7).getValues(); var ok = 0;
+  v.forEach(function (r) { if (String(r[0]) === phone && ms(r[1]) === month) { cnt++; if (r[6]) ok++; } });
+  return { ok: ok, total: cnt };
 }
 function logout(b) {
   CacheService.getScriptCache().remove('t_' + b.token);
@@ -297,11 +318,11 @@ function adminMonth(month) {
   var us = listUsers(), by = {};
   us.forEach(function (u) { by[u.phone] = { phone: u.phone, name: u.name, active: u.active, role: u.role, rows: [], total: 0 }; });
   var s = rows(), n = s.getLastRow();
-  if (n > 1) s.getRange(2, 1, n - 1, 5).getValues().forEach(function (r) {
+  if (n > 1) s.getRange(2, 1, n - 1, 7).getValues().forEach(function (r) {
     if (ms(r[1]) !== month) return;
     var p = String(r[0]); if (!by[p]) return;
     var a = Number(r[4]) || 0;
-    by[p].rows.push({ p: r[2], w: r[3], a: a }); by[p].total += a;
+    by[p].rows.push({ p: r[2], w: r[3], a: a, k: r[6] ? 1 : 0 }); by[p].total += a;
   });
   var ss = salesSheet(), sn = ss.getLastRow();
   if (sn > 1) ss.getRange(2, 1, sn - 1, 4).getValues().forEach(function (r) {

@@ -6,7 +6,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#f1f1f0;--card:#fff;--card2:#f5f5f4;--tx:#1b1b1b;--mu:rgba(27,27,27,.68);--ac:rgb(140,14,14);--ach:rgb(166,24,24);--bd:rgba(27,27,27,.12);--ok:#2f7d3a;--er:#b3261e}
+:root{--okbg:#e8f3ea;--bg:#f1f1f0;--card:#fff;--card2:#f5f5f4;--tx:#1b1b1b;--mu:rgba(27,27,27,.68);--ac:rgb(140,14,14);--ach:rgb(166,24,24);--bd:rgba(27,27,27,.12);--ok:#2f7d3a;--er:#b3261e}
 *{box-sizing:border-box}html{color-scheme:light}
 body{margin:0;background:var(--bg);color:var(--tx);font:400 16px/1.5 Montserrat,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 .wrap{max-width:720px;margin:0 auto;padding:20px 16px 40px}
@@ -58,7 +58,7 @@ h2.step{margin:0 0 8px}
 .mnav button{padding:0;min-height:48px;display:flex;align-items:center;justify-content:center}.mnav select{font-weight:700;font-size:17px;text-align:center;text-align-last:center}
 .big{font:800 clamp(32px,9vw,44px)/1.05 Montserrat,system-ui,sans-serif;margin:2px 0 14px}
 .st{display:grid;grid-template-columns:1fr 1fr;gap:10px}.st>div{border:1px solid var(--bd);border-radius:4px;padding:10px 12px;background:var(--card2)}.st small{display:block;color:var(--mu);font-size:12px}.st b{font-size:17px}
-summary{align-items:center;flex-wrap:wrap;list-style:none}.det{flex:0 0 100%;margin-top:2px}.pr{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:2px 0}#alist details:first-child{border-top:0;padding-top:0}summary::-webkit-details-marker{display:none}summary .nm{font-weight:800;font-size:17px}
+summary{align-items:center;flex-wrap:wrap;list-style:none}.det{flex:0 0 100%;margin-top:2px}#alist details:first-child{border-top:0;padding-top:0}summary::-webkit-details-marker{display:none}summary .nm{font-weight:800;font-size:17px}
 summary>b{font-size:17px}
 td.p input,td.w input,td.n input{min-width:0}
 #alist details{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:0;margin-bottom:10px;transition:border-color .15s}
@@ -127,16 +127,9 @@ button.totop,button.totop:hover{display:block;width:100%;margin:8px 0 0;padding:
 .pp .d{font-size:12px;color:var(--mu);font-weight:600;line-height:1.15}.pp .d i{display:block;font-style:normal;font-size:11px;font-weight:500}
 .pp .n{line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}.pp .n.e{color:var(--mu)}.pp .a{font-weight:800;color:var(--ok);white-space:nowrap}
 .pp button.x{width:40px;height:40px;min-height:0;padding:0;border-radius:8px;background:transparent;border:0;color:var(--mu)}
-.padd{width:100%;min-height:44px;margin-top:8px;border:1px dashed var(--ach);background:transparent;color:var(--ach);border-radius:10px;font:700 14px Montserrat,sans-serif}.padd:hover{background:transparent}
-.pf{display:none;background:var(--card2);border-radius:12px;padding:10px;margin-top:8px;gap:8px;grid-template-columns:minmax(0,1fr);overflow:hidden}.pf.on{display:grid}.pf>*{min-width:0;max-width:100%}.pf input{min-width:0;width:100%;max-width:100%;-webkit-appearance:none;appearance:none;display:block}.pf input[type=date]{height:48px;line-height:1.2;text-align:left;padding-right:6px}.pf input::-webkit-date-and-time-value{text-align:left;min-width:0}.pf input::-webkit-calendar-picker-indicator{margin:0;padding:0 0 0 4px}.pf .cm,.pf .go{grid-column:auto}
 .dtl{padding:0}.open{width:100%;margin-top:14px;min-height:44px;font-size:14px}
-@media(min-width:700px){.pf{grid-template-columns:minmax(0,1fr) 160px minmax(0,1.4fr) auto}.pf .cm,.pf .go{grid-column:auto}}
 /* вид сотрудника: согласованная запись */
 .aps{float:right;font:700 13px Montserrat,sans-serif;letter-spacing:0;text-transform:none;color:var(--ok)}
-tr.done td.dn{display:grid;grid-template-columns:1fr auto 24px;gap:2px 10px;align-items:center;padding:6px 0;min-height:52px}
-.dn .t{font-size:14px;line-height:1.25;min-width:0}.dn .t b{display:block;font-weight:700;font-size:15px}.dn .t small{display:block;color:var(--mu);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dn .s{font-weight:800;white-space:nowrap}
-.dn .mk{width:22px;height:22px;border-radius:50%;background:var(--ok);color:#fff;display:flex;align-items:center;justify-content:center}.dn .mk svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
-@media(max-width:560px){#tb tr.done{display:block;padding:4px 0}}
 
 .pamt{display:flex;align-items:center;background:var(--card2);border:1px solid var(--bd);border-radius:12px;padding:0 14px;min-height:64px}.pamt:focus-within{border-color:var(--ach);box-shadow:0 0 0 1px var(--ach)}
 .pamt input{border:0;background:transparent;box-shadow:none;font:800 30px Montserrat,sans-serif;text-align:right;min-height:60px;padding:0;min-width:0}.pamt input:focus{box-shadow:none}.pamt span{font:800 24px Montserrat,sans-serif;color:var(--mu);margin-left:8px}
@@ -148,9 +141,34 @@ tr.done td.dn{display:grid;grid-template-columns:1fr auto 24px;gap:2px 10px;alig
 #alist summary .det>span:first-child{font-size:13px;font-weight:500;color:var(--mu)}
 .apv,.apv b{font-size:13px}.apv b{font-weight:800}
 .sec>span:first-child{font-size:11px}.sec .sa{font-size:13px}
-.rec .t,.dn .t b{font-size:15px;font-weight:700}.rec .t small,.dn .t small{font-size:13px;font-weight:400}.rec .s,.dn .s{font-size:15px;font-weight:800}
+.rec .t{font-size:15px;font-weight:700}.rec .t small{font-size:13px;font-weight:400}.rec .s{font-size:15px;font-weight:800}
 .pp{font-size:15px}.pp .d{font-size:13px;font-weight:600}.pp .d i{font-size:11px}.pp .n{font-size:15px;font-weight:400}.pp .a{font-size:15px;font-weight:800}
 .open{font-size:15px}
+
+/* строки сотрудника: свёрнутая, раскрытая, согласованная */
+.wt thead{display:none}.wt,.wt tbody{display:block;width:100%;margin:0}
+#tb tr.r2{display:block;position:relative;overflow:hidden;padding:0;border:0;border-bottom:1px solid var(--bd)}#tb tr.r2:last-child{border-bottom:0}
+#tb tr.r2 td{display:block;padding:0;width:auto}
+#tb tr.r2.aok{background:var(--okbg);border-radius:12px;border-bottom:0;margin:8px 0}#tb tr.r2.aok .sm{padding:10px 14px}
+.sm{display:grid;grid-template-columns:1fr auto;gap:2px 12px;align-items:center;padding:10px 0;min-height:60px}
+.sm .p{font-weight:700;font-size:15px;line-height:1.25;min-width:0}.sm .w{font-size:13px;color:var(--mu);line-height:1.25;grid-column:1}
+.sm .s{grid-column:2;grid-row:1;font-weight:800;font-size:15px;white-space:nowrap;text-align:right}
+.sm .act{grid-column:2;grid-row:2;justify-self:end;display:flex;align-items:center}
+.lnk{border:0;background:none;padding:6px 0 6px 6px;min-height:32px;color:var(--ac);font:700 13px Montserrat,sans-serif;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px;cursor:pointer}.lnk:hover{background:none}
+.chk{display:inline-flex;align-items:center;gap:5px;color:var(--ok);font:700 13px Montserrat,sans-serif}.chk i{width:18px;height:18px;border-radius:50%;background:var(--ok);display:inline-flex;align-items:center;justify-content:center}.chk svg{width:11px;height:11px;fill:none;stroke:#fff;stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round}
+.ed{padding:12px 0 14px;display:grid;gap:8px}
+.ed .amt{display:flex;align-items:center;border:1px solid var(--bd);border-radius:4px;background:var(--card2);padding:0 12px;min-height:48px}.ed .amt:focus-within{border-color:var(--ach);box-shadow:0 0 0 1px var(--ach)}
+.ed .amt input{border:0;box-shadow:none;background:transparent;text-align:right;font:800 17px Montserrat,sans-serif;padding:0;min-height:46px}.ed .amt input:focus{box-shadow:none;border:0}
+.amt span{font:800 17px Montserrat,sans-serif;color:var(--mu);margin-left:6px}
+.ed .go{width:100%;min-height:48px;font-size:15px}.ed .dl{border:0;background:none;color:var(--er);font:700 13px Montserrat,sans-serif;min-height:44px;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}.ed .dl:hover{background:none}
+tr.swp .delbg{position:absolute;left:0;right:0;top:0;bottom:0;background:#b3261e;display:flex;justify-content:flex-end}
+tr.swp .dtap{width:96px;border:0;border-radius:0;background:transparent;color:#fff;font:700 14px Montserrat,sans-serif;padding:0}
+tr.swp .slide{position:relative;background:var(--card);transition:transform .22s ease;touch-action:pan-y;user-select:none;-webkit-user-select:none}
+tr.swp.opened .slide{transform:translateX(-96px)}tr.swp.drag .slide{transition:none}
+#tb tr.out{animation:rowout .28s ease-in forwards}@keyframes rowout{to{opacity:0;max-height:0;transform:translateX(-24px)}}
+#tb tr.pop{animation:rowpop 1.1s ease-out}@keyframes rowpop{0%{background:#cfe9d3;transform:scale(1.02)}40%{transform:scale(1)}100%{background:transparent}}
+#pay{position:relative}.fly{position:absolute;right:16px;top:12px;font:800 15px Montserrat,sans-serif;color:var(--ok);background:var(--okbg);border-radius:999px;padding:4px 12px;pointer-events:none;animation:fly 1.4s ease-out forwards}
+@keyframes fly{0%{opacity:0;transform:translateY(14px) scale(.8)}20%{opacity:1;transform:none}80%{opacity:1}100%{opacity:0;transform:translateY(-22px)}}
 </style></head><body>
 <header class="bar hide" id="bar"><div class="in"><span class="brand">Twiglles</span>
 <div class="menu"><button class="g" id="mbtn" aria-haspopup="true">Меню ▾</button>
@@ -202,7 +220,7 @@ tr.done td.dn{display:grid;grid-template-columns:1fr auto 24px;gap:2px 10px;alig
     <div id="vWork">
     <h2 id="mt" class="step" style="margin-top:20px"></h2>
     <div class="card"><h2 id="mti" class="hide">Другие должности</h2><div id="ldm" class="mu">Загружаю данные…</div>
-      <table><thead><tr><th class="p">Проект</th><th class="w">Вид работы</th><th class="n">Сумма, ₽</th><th class="d"></th></tr></thead><tbody id="tb"></tbody></table>
+      <table class="wt"><thead><tr><th class="p">Проект</th><th class="w">Вид работы</th><th class="n">Сумма, ₽</th><th class="d"></th></tr></thead><tbody id="tb"></tbody></table>
       <div class="row" style="margin-top:10px"><button class="g" id="add" style="flex:none">+ Строка</button></div>
       <div class="mu" id="st" style="margin-top:6px"></div>
     </div>
@@ -364,17 +382,33 @@ $('aprev').onclick = () => step($('am'), 1); $('anext').onclick = () => step($('
 const locked = () => S.role !== 'admin' && !S.editPast && cur < nowM();
 const growAll = () => { const g = () => $('tb').querySelectorAll('textarea').forEach(grow); g(); requestAnimationFrame(g); setTimeout(g, 300); };
 const grow = t => { t.style.height = 'auto'; t.style.height = t.scrollHeight + 2 + 'px'; };
+const OPEN = new WeakSet(), fl = r => String(r.p || '').trim() && num(r.a) > 0;
+function curTotal() { return (data[cur] || []).reduce((s, r) => s + num(r.a), 0) + (grid ? calcS(curS(), gridM(cur)).total : 0); }
+function delRow(i) { data[cur].splice(i, 1); drawMonth(); dirty(); }
+function reward(i) {
+  const r = data[cur][i], a = num(r.a), t = curTotal(), big = $('pay').querySelector('.big');
+  try { if (navigator.vibrate) navigator.vibrate(15); } catch (e) {}
+  const tr = $('tb').querySelector(`tr[data-i="${i}"]`); if (tr) tr.classList.add('pop');
+  if (!big || !(a > 0)) return;
+  const t0 = performance.now(), from = t - a, d = 600;
+  const step = n => { const k = Math.min(1, (n - t0) / d), e = 1 - Math.pow(1 - k, 3); big.textContent = rub(from + (t - from) * e); if (k < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+  const f = document.createElement('div'); f.className = 'fly'; f.textContent = '+' + rub(a); $('pay').appendChild(f); setTimeout(() => f.remove(), 1500);
+}
 function drawMonth() {
   const rows = data[cur] && data[cur].length ? data[cur] : [{ p: '', w: '', a: '' }];
   data[cur] = rows;
-  const CKI = '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
-  $('tb').innerHTML = rows.map((r, i) => r.k ? `<tr class="done"><td class="dn" colspan="4"><div class="t"><b>${esc(r.p)}</b><small>${esc(r.w)}</small></div><div class="s">${rub(num(r.a))}</div><span class="mk">${CKI}</span></td></tr>` : `<tr><td class="p"><input data-i="${i}" data-k="p" value="${esc(r.p)}" placeholder="Проект"></td>
-    <td class="w"><textarea rows="1" data-i="${i}" data-k="w" placeholder="Вид работы">${esc(r.w)}</textarea></td>
-    <td class="n"><input data-i="${i}" data-k="a" inputmode="decimal" value="${esc(fin(r.a))}" placeholder="Сумма, ₽"></td>
-    <td class="d"><button class="x" data-del="${i}">✕</button></td></tr>`).join('');
-  const lk = locked();
-  $('tb').querySelectorAll('input,textarea').forEach(inp => { inp.disabled = lk; inp.oninput = () => { if (inp.tagName === 'TEXTAREA') grow(inp); data[cur][+inp.dataset.i][inp.dataset.k] = inp.dataset.k === 'a' ? fmtInput(inp) : inp.value; total(); dirty(); }; });
-  $('tb').querySelectorAll('[data-del]').forEach(b => { b.disabled = lk; b.onclick = async () => { const r = data[cur][+b.dataset.del]; if ((r.p || r.w || num(r.a)) && !(await ask('Удалить эту строку?', 'Да, удалить'))) return; data[cur].splice(+b.dataset.del, 1); drawMonth(); dirty(); }; });
+  const lk = locked(), CKI = '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  $('tb').innerHTML = rows.map((r, i) => {
+    if (r.k) return `<tr class="r2 aok" data-i="${i}"><td colspan="4"><div class="sm"><div class="p">${esc(r.p) || 'Без названия'}</div><div class="s">${rub(num(r.a))}</div><div class="w">${esc(r.w) || '&nbsp;'}</div><div class="act"><span class="chk"><i>${CKI}</i>Согласовано</span></div></div></td></tr>`;
+    if (OPEN.has(r) || !fl(r)) return `<tr class="r2" data-i="${i}"><td colspan="4"><div class="ed"><input data-i="${i}" data-k="p" value="${esc(r.p)}" placeholder="Проект"><textarea rows="1" data-i="${i}" data-k="w" placeholder="Вид работы">${esc(r.w)}</textarea><div class="amt"><input data-i="${i}" data-k="a" inputmode="decimal" value="${esc(fin(r.a))}" placeholder="0"><span>₽</span></div><button class="go" data-done="${i}">Готово</button><button class="dl" data-del="${i}">Удалить строку</button></div></td></tr>`;
+    return `<tr class="r2 swp" data-i="${i}"><td colspan="4">${lk ? '' : `<div class="delbg"><button class="dtap" data-swdel="${i}">Удалить</button></div>`}<div class="sm slide"><div class="p">${esc(r.p)}</div><div class="s">${rub(num(r.a))}</div><div class="w">${esc(r.w) || '&nbsp;'}</div><div class="act"><button class="lnk" data-edit="${i}">Изменить</button></div></div></td></tr>`;
+  }).join('');
+  $('tb').querySelectorAll('input,textarea').forEach(inp => { inp.disabled = lk; inp.oninput = () => { if (inp.tagName === 'TEXTAREA') grow(inp); const r = data[cur][+inp.dataset.i]; OPEN.add(r); r[inp.dataset.k] = inp.dataset.k === 'a' ? fmtInput(inp) : inp.value; total(); dirty(); }; });
+  $('tb').querySelectorAll('[data-edit]').forEach(b => { b.disabled = lk; b.onclick = () => { data[cur].forEach(r => { if (!r.k && fl(r)) OPEN.delete(r); }); OPEN.add(data[cur][+b.dataset.edit]); drawMonth(); const f = $('tb').querySelector(`tr[data-i="${b.dataset.edit}"] input`); if (f) f.focus(); }; });
+  $('tb').querySelectorAll('[data-done]').forEach(b => { b.disabled = lk; b.onclick = () => { const i = +b.dataset.done, r = data[cur][i]; if (!fl(r)) { const f = $('tb').querySelector(`tr[data-i="${i}"] [data-k="${String(r.p || '').trim() ? 'a' : 'p'}"]`); if (f) f.focus(); return; } OPEN.delete(r); drawMonth(); reward(i); }; });
+  $('tb').querySelectorAll('[data-del]').forEach(b => { b.disabled = lk; b.onclick = () => delRow(+b.dataset.del); });
+  $('tb').querySelectorAll('[data-swdel]').forEach(b => b.onclick = () => { const tr = b.closest('tr'); tr.classList.add('out'); setTimeout(() => delRow(+b.dataset.swdel), 260); });
   growAll();
   $('add').disabled = lk; setSt(lk ? 'Этот месяц закрыт для правок' : '', 'mu'); drawSales(); total(); drawMgrs();
 }
@@ -478,7 +512,7 @@ $('vEmp').addEventListener('focusin', async e => {
   if (await ask('Вы меняете прошлый месяц. Вы уверены?', 'Да, менять')) { pastOk.add(cur); t.focus(); }
 });
 
-$('add').onclick = () => { data[cur].push({ p: '', w: '', a: '' }); drawMonth(); dirty(); const l = $('tb').querySelectorAll('tr'); if (l.length) l[l.length - 1].querySelector('input').focus(); };
+$('add').onclick = () => { data[cur].forEach(r => { if (!r.k && fl(r)) OPEN.delete(r); }); data[cur].push({ p: '', w: '', a: '' }); drawMonth(); dirty(); const l = $('tb').querySelectorAll('tr'); if (l.length) { const f = l[l.length - 1].querySelector('input'); if (f) f.focus(); } };
 function setSt(t, c) { ['st', 'sst'].forEach(i => { $(i).textContent = t; $(i).className = c + (i === 'sst' ? ' sst' : ''); }); }
 function dirty() { setSt('Сохранение…', 'mu'); clearTimeout(timer); timer = setTimeout(flush, 1200); }
 let queue = Promise.resolve();
@@ -531,7 +565,7 @@ function drawSum(j) {
   const CKI = '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>', fd = d => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(d || ''); return m ? `${m[3]}.${m[2]}<i>${m[1]}</i>` : esc(d || ''); };
   const cntk = x => x.rows.filter(r => r.k).length;
   $('alist').innerHTML = e.length ? e.map(x => `<details data-ph="${x.phone}"${opened.has(x.phone) ? ' open' : ''}><summary><span class="nm">${esc(x.name)}</span><b>${rub(x.total)}</b><i class="chev"></i><span class="mu det"><span>выплачено ${rub(x.paid)} · осталось ${rub(x.total - x.paid)}</span>${x.rows.length ? `<button class="apv${cntk(x) === x.rows.length ? ' on' : cntk(x) ? ' part' : ''}" data-apall="${x.phone}">${cntk(x) === x.rows.length ? CKI : '<i></i>'}Согласовано <b>${cntk(x)} из ${x.rows.length}</b></button>` : ''}</span></summary>
-    <div class="dtl"><div class="sec"><span>Записи</span>${x.rows.length ? `<button class="sa" data-apall="${x.phone}">${cntk(x) === x.rows.length ? 'Снять все' : 'Согласовать все'}</button>` : ''}</div>${x.sales != null ? `<div class="rec"><div class="t">Продажи<small>расчёт менеджера</small></div><div class="s">${rub(x.sales)}</div><span></span></div>` : ''}${x.rows.map((r, i) => `<div class="rec${r.k ? ' aok' : ''}"><div class="t">${esc(r.p)}<small>${esc(r.w)}</small></div><div class="s">${rub(r.a)}</div><button class="c" data-ap="${x.phone}" data-i="${i}" aria-label="Согласовать">${CKI}</button></div>`).join('') || (x.sales != null ? '' : '<div class="mu" style="padding:6px 0">Записей нет</div>')}
+    <div class="dtl"><div class="sec"><span>Работы</span>${x.rows.length ? `<button class="sa" data-apall="${x.phone}">${cntk(x) === x.rows.length ? 'Снять все' : 'Согласовать все'}</button>` : ''}</div>${x.sales != null ? `<div class="rec"><div class="t">Продажи<small>расчёт менеджера</small></div><div class="s">${rub(x.sales)}</div><span></span></div>` : ''}${x.rows.map((r, i) => `<div class="rec${r.k ? ' aok' : ''}"><div class="t">${esc(r.p)}<small>${esc(r.w)}</small></div><div class="s">${rub(r.a)}</div><button class="c" data-ap="${x.phone}" data-i="${i}" aria-label="Согласовать">${CKI}</button></div>`).join('') || (x.sales != null ? '' : '<div class="mu" style="padding:6px 0">Записей нет</div>')}
     <div class="sec"><span>Выплаты</span><button class="sa" data-padd="${x.phone}" data-pname="${esc(x.name)}">+ Выплата</button></div>${x.pays.map(p => `<div class="pp adm"><div class="d">${fd(p.d)}</div><div class="n${p.n ? '' : ' e'}">${p.n ? esc(p.n) : '—'}</div><div class="a">+${rub(p.a)}</div><button class="x" data-delpay="${esc(p.id)}" aria-label="Удалить">✕</button></div>`).join('') || '<div class="mu" style="padding:6px 0">Выплат пока не было</div>'}
     <button class="g open" data-edit="${x.phone}" data-role="${esc(x.role)}" data-name="${esc(x.name)}">Открыть кабинет сотрудника</button></div></details>`).join('') : '<span class="mu">Сотрудников пока нет</span>';
   const setK = async (ph, idx, v) => {
@@ -564,6 +598,16 @@ $('pgo').onclick = async () => {
   if (j.error) { $('pe').textContent = 'Не удалось сохранить выплату'; return; }
   $('psheet').classList.add('hide'); loadSum();
 };
+
+let sx = 0, sy = 0, swr = null, sdx = 0, smoved = false, justMoved = false;
+$('tb').addEventListener('pointerdown', e => { const r = e.target.closest('tr.swp'); $('tb').querySelectorAll('tr.swp.opened').forEach(x => { if (x !== r) x.classList.remove('opened'); }); if (!r || e.target.closest('.delbg')) return; swr = r; sx = e.clientX; sy = e.clientY; sdx = 0; smoved = false; });
+$('tb').addEventListener('pointermove', e => { if (!swr) return; const dx = e.clientX - sx, dy = e.clientY - sy; if (!smoved && Math.abs(dx) < 8) return; if (!smoved && Math.abs(dy) > Math.abs(dx)) { swr = null; return; } smoved = true; sdx = dx; const base = swr.classList.contains('opened') ? -96 : 0, x = Math.max(-swr.offsetWidth, Math.min(0, base + dx)); swr.classList.add('drag'); swr.querySelector('.slide').style.transform = 'translateX(' + x + 'px)'; });
+const endSwipe = () => { if (!swr) return; const r = swr; swr = null; r.classList.remove('drag'); r.querySelector('.slide').style.transform = '';
+  if (smoved) { justMoved = true; setTimeout(() => justMoved = false, 50); const was = r.classList.contains('opened');
+    if (sdx < -r.offsetWidth * 0.45) { const i = +r.dataset.i; r.classList.add('out'); setTimeout(() => delRow(i), 260); return; }
+    if (!was && sdx < -40) r.classList.add('opened'); else if (was && sdx > 30) r.classList.remove('opened'); } };
+document.addEventListener('pointerup', endSwipe); document.addEventListener('pointercancel', endSwipe);
+document.addEventListener('click', e => { if (justMoved) { e.stopPropagation(); e.preventDefault(); } }, true);
 async function loadDep() {
   const sel = $('dm'); if (!sel.options.length) { sel.innerHTML = monthList().map(m => `<option value="${m}">${mlabel(m)}</option>`).join(''); sel.value = nowM(); sel.onchange = loadDep; $('dprev').onclick = () => step(sel, 1); $('dnext').onclick = () => step(sel, -1); }
   const key = 'd' + sel.value, c = ck(key);

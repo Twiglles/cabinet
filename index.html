@@ -160,7 +160,7 @@ button.totop,button.totop:hover{display:block;width:100%;margin:8px 0 0;padding:
 .ed .amt{display:flex;align-items:center;border:1px solid var(--bd);border-radius:4px;background:var(--card2);padding:0 12px;min-height:48px}.ed .amt:focus-within{border-color:var(--ach);box-shadow:0 0 0 1px var(--ach)}
 .ed .amt input{border:0;box-shadow:none;background:transparent;text-align:right;font:800 17px Montserrat,sans-serif;padding:0;min-height:46px}.ed .amt input:focus{box-shadow:none;border:0}
 .amt span{font:800 17px Montserrat,sans-serif;color:var(--mu);margin-left:6px}
-.ed .go{width:100%;min-height:48px;font-size:15px}.ed .dl{border:0;background:none;color:var(--er);font:700 13px Montserrat,sans-serif;min-height:44px;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}.ed .dl:hover{background:none}
+.ed .go{width:100%;min-height:48px;font-size:15px}.dl{border:0;background:none;color:var(--er);font:700 13px Montserrat,sans-serif;min-height:44px;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}.dl:hover{background:none}
 tr.swp:not(.opened):not(.drag) .delbg{visibility:hidden}tr.swp .delbg{position:absolute;left:0;right:0;top:0;bottom:0;background:#b3261e;display:flex;justify-content:flex-end}
 tr.swp .dtap{width:96px;border:0;border-radius:0;background:transparent;color:#fff;font:700 14px Montserrat,sans-serif;padding:0}
 tr.swp .slide{position:relative;background:var(--card);transition:transform .22s ease;touch-action:pan-y;user-select:none;-webkit-user-select:none}
@@ -258,6 +258,13 @@ tr.swp.opened .slide{transform:translateX(-96px)}tr.swp.drag .slide{transition:n
   </div></div>
 </div>
 </div>
+<div id="rsheet" class="dlg sheet hide"><div class="box">
+  <h3 id="rt">Новая работа</h3>
+  <div class="ed"><input id="rp" placeholder="Проект" autocomplete="off"><textarea id="rw" rows="1" placeholder="Вид работы"></textarea><div class="amt"><input id="ra" inputmode="decimal" placeholder="0" autocomplete="off" aria-label="Сумма"><span>₽</span></div></div>
+  <p id="re" class="er" style="margin:8px 0 0"></p>
+  <button id="rgo" class="go" style="width:100%;margin-top:12px;min-height:52px">Готово</button>
+  <button id="rdel" class="dl" style="width:100%">Удалить строку</button>
+</div></div>
 <div id="psheet" class="dlg sheet hide"><div class="box">
   <h3>Новая выплата</h3><div class="mu" id="pnm" style="margin-bottom:12px"></div>
   <div class="pamt"><input id="pa" inputmode="numeric" placeholder="0" autocomplete="off" aria-label="Сумма"><span>₽</span></div>
@@ -380,9 +387,8 @@ $('msel').onchange = () => { flush(); cur = $('msel').value; drawMonth(); };
 $('mprev').onclick = () => step($('msel'), 1); $('mnext').onclick = () => step($('msel'), -1);
 $('aprev').onclick = () => step($('am'), 1); $('anext').onclick = () => step($('am'), -1);
 const locked = () => S.role !== 'admin' && !S.editPast && cur < nowM();
-const growAll = () => { const g = () => $('tb').querySelectorAll('textarea').forEach(grow); g(); requestAnimationFrame(g); setTimeout(g, 300); };
 const grow = t => { t.style.height = 'auto'; t.style.height = t.scrollHeight + 2 + 'px'; };
-const OPEN = new WeakSet(), fl = r => String(r.p || '').trim() && num(r.a) > 0;
+const fl = r => String(r.p || '').trim() && num(r.a) > 0;
 function curTotal() { return (data[cur] || []).reduce((s, r) => s + num(r.a), 0) + (grid ? calcS(curS(), gridM(cur)).total : 0); }
 function delRow(i) { data[cur].splice(i, 1); drawMonth(); dirty(); }
 function reward(i) {
@@ -396,20 +402,14 @@ function reward(i) {
   const f = document.createElement('div'); f.className = 'fly'; f.textContent = '+' + rub(a); $('pay').appendChild(f); setTimeout(() => f.remove(), 1500);
 }
 function drawMonth() {
-  const rows = data[cur] && data[cur].length ? data[cur] : [{ p: '', w: '', a: '' }];
-  data[cur] = rows;
+  const rows = data[cur] = data[cur] || [];
   const lk = locked(), CKI = '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
   $('tb').innerHTML = rows.map((r, i) => {
     if (r.k) return `<tr class="r2 aok" data-i="${i}"><td colspan="4"><div class="sm"><div class="p">${esc(r.p) || 'Без названия'}</div><div class="s">${rub(num(r.a))}</div><div class="w">${esc(r.w) || '&nbsp;'}</div><div class="act"><span class="chk"><i>${CKI}</i>Согласовано</span></div></div></td></tr>`;
-    if (OPEN.has(r) || !fl(r)) return `<tr class="r2" data-i="${i}"><td colspan="4"><div class="ed"><input data-i="${i}" data-k="p" value="${esc(r.p)}" placeholder="Проект"><textarea rows="1" data-i="${i}" data-k="w" placeholder="Вид работы">${esc(r.w)}</textarea><div class="amt"><input data-i="${i}" data-k="a" inputmode="decimal" value="${esc(fin(r.a))}" placeholder="0"><span>₽</span></div><button class="go" data-done="${i}">Готово</button><button class="dl" data-del="${i}">Удалить строку</button></div></td></tr>`;
-    return `<tr class="r2 swp" data-i="${i}"><td colspan="4">${lk ? '' : `<div class="delbg"><button class="dtap" data-swdel="${i}">Удалить</button></div>`}<div class="sm slide"><div class="p">${esc(r.p)}</div><div class="s">${rub(num(r.a))}</div><div class="w">${esc(r.w) || '&nbsp;'}</div><div class="act"><button class="lnk" data-edit="${i}">Изменить</button></div></div></td></tr>`;
+    return `<tr class="r2 swp" data-i="${i}"><td colspan="4">${lk ? '' : `<div class="delbg"><button class="dtap" data-swdel="${i}">Удалить</button></div>`}<div class="sm slide"><div class="p">${esc(r.p) || 'Без названия'}</div><div class="s">${rub(num(r.a))}</div><div class="w">${esc(r.w) || '&nbsp;'}</div><div class="act"><button class="lnk" data-edit="${i}">Изменить</button></div></div></td></tr>`;
   }).join('');
-  $('tb').querySelectorAll('input,textarea').forEach(inp => { inp.disabled = lk; inp.oninput = () => { if (inp.tagName === 'TEXTAREA') grow(inp); const r = data[cur][+inp.dataset.i]; OPEN.add(r); r[inp.dataset.k] = inp.dataset.k === 'a' ? fmtInput(inp) : inp.value; total(); dirty(); }; });
-  $('tb').querySelectorAll('[data-edit]').forEach(b => { b.disabled = lk; b.onclick = () => { data[cur].forEach(r => { if (!r.k && fl(r)) OPEN.delete(r); }); OPEN.add(data[cur][+b.dataset.edit]); drawMonth(); const f = $('tb').querySelector(`tr[data-i="${b.dataset.edit}"] input`); if (f) f.focus(); }; });
-  $('tb').querySelectorAll('[data-done]').forEach(b => { b.disabled = lk; b.onclick = () => { const i = +b.dataset.done, r = data[cur][i]; if (!fl(r)) { const f = $('tb').querySelector(`tr[data-i="${i}"] [data-k="${String(r.p || '').trim() ? 'a' : 'p'}"]`); if (f) f.focus(); return; } OPEN.delete(r); drawMonth(); reward(i); }; });
-  $('tb').querySelectorAll('[data-del]').forEach(b => { b.disabled = lk; b.onclick = () => delRow(+b.dataset.del); });
+  $('tb').querySelectorAll('[data-edit]').forEach(b => { b.disabled = lk; b.onclick = () => openRow(+b.dataset.edit); });
   $('tb').querySelectorAll('[data-swdel]').forEach(b => b.onclick = () => { const tr = b.closest('tr'); tr.classList.add('out'); setTimeout(() => delRow(+b.dataset.swdel), 260); });
-  growAll();
   $('add').disabled = lk; setSt(lk ? 'Этот месяц закрыт для правок' : '', 'mu'); drawSales(); total(); drawMgrs();
 }
 const fin = v => { v = String(v ?? '').replace(/[^\d,.\-]/g, '').replace('.', ','); let [i, d] = v.split(','); const neg = i.startsWith('-'); i = i.replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, ' '); return (neg ? '-' : '') + i + (d !== undefined ? ',' + d.replace(/\D/g, '').slice(0, 2) : ''); };
@@ -512,7 +512,7 @@ $('vEmp').addEventListener('focusin', async e => {
   if (await ask('Вы меняете прошлый месяц. Вы уверены?', 'Да, менять')) { pastOk.add(cur); t.focus(); }
 });
 
-$('add').onclick = () => { data[cur].forEach(r => { if (!r.k && fl(r)) OPEN.delete(r); }); data[cur].push({ p: '', w: '', a: '' }); drawMonth(); dirty(); const l = $('tb').querySelectorAll('tr'); if (l.length) { const f = l[l.length - 1].querySelector('input'); if (f) f.focus(); } };
+$('add').onclick = () => openRow(-1);
 function setSt(t, c) { ['st', 'sst'].forEach(i => { $(i).textContent = t; $(i).className = c + (i === 'sst' ? ' sst' : ''); }); }
 function dirty() { setSt('Сохранение…', 'mu'); clearTimeout(timer); timer = setTimeout(flush, 1200); }
 let queue = Promise.resolve();
@@ -581,6 +581,22 @@ function drawSum(j) {
   $('alist').querySelectorAll('[data-edit]').forEach(b => b.onclick = () => { cur = sel.value; startPreview(b.dataset.edit, b.dataset.name, b.dataset.role); });
 }
 
+let rIdx = -1;
+function openRow(i) {
+  const r = i >= 0 ? data[cur][i] : { p: '', w: '', a: '' };
+  rIdx = i; $('rt').textContent = i >= 0 ? 'Работа' : 'Новая работа'; $('rdel').style.display = i >= 0 ? '' : 'none'; $('re').textContent = '';
+  $('rp').value = r.p; $('rw').value = r.w; $('ra').value = fin(r.a); $('rsheet').classList.remove('hide'); grow($('rw')); setTimeout(() => $('rp').focus(), 60);
+}
+$('rw').oninput = () => grow($('rw')); $('ra').oninput = () => { fmtInput($('ra')); $('re').textContent = ''; }; $('rp').oninput = () => { $('re').textContent = ''; };
+$('rsheet').onclick = e => { if (e.target === $('rsheet')) $('rsheet').classList.add('hide'); };
+$('rdel').onclick = () => { $('rsheet').classList.add('hide'); delRow(rIdx); };
+$('rgo').onclick = () => {
+  const r = { p: $('rp').value, w: $('rw').value, a: fmtInput($('ra')) };
+  if (!String(r.p).trim()) { $('re').textContent = 'Укажите проект'; $('rp').focus(); return; }
+  if (!(num(r.a) > 0)) { $('re').textContent = 'Укажите сумму больше нуля'; $('ra').focus(); return; }
+  let i = rIdx; if (i >= 0) Object.assign(data[cur][i], r); else { data[cur].push(r); i = data[cur].length - 1; }
+  $('rsheet').classList.add('hide'); drawMonth(); dirty(); reward(i);
+};
 let payPh = '';
 function openPay(ph, name) {
   payPh = ph; $('pnm').textContent = name; $('pa').value = ''; $('pc').value = ''; $('pe').textContent = '';

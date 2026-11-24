@@ -405,7 +405,7 @@ function drawMonth() {
   const rows = data[cur] = data[cur] || [];
   const lk = locked(), CKI = '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
   $('tb').innerHTML = rows.map((r, i) => {
-    if (r.k) return `<tr class="r2 aok" data-i="${i}"><td colspan="4"><div class="sm"><div class="p">${esc(r.p) || 'Без названия'}</div><div class="s">${rub(num(r.a))}</div><div class="w">${esc(r.w) || '&nbsp;'}</div><div class="act"><button class="lnk" data-dup="${i}">Копировать</button><span class="chk"><i>${CKI}</i>Согласовано</span></div></div></td></tr>`;
+    if (r.k) return `<tr class="r2 aok" data-i="${i}"><td colspan="4"><div class="sm"><div class="p">${esc(r.p) || 'Без названия'}</div><div class="s">${rub(num(r.a))}</div><div class="w">${esc(r.w) || '&nbsp;'}</div><div class="act"><span class="chk"><i>${CKI}</i>Согласовано</span></div></div></td></tr>`;
     return `<tr class="r2 swp" data-i="${i}"><td colspan="4">${lk ? '' : `<div class="delbg"><button class="dtap" data-swdel="${i}">Удалить</button></div>`}<div class="sm slide"><div class="p">${esc(r.p) || 'Без названия'}</div><div class="s">${rub(num(r.a))}</div><div class="w">${esc(r.w) || '&nbsp;'}</div><div class="act"><button class="lnk" data-dup="${i}">Копировать</button><button class="lnk" data-edit="${i}">Изменить</button></div></div></td></tr>`;
   }).join('');
   $('tb').querySelectorAll('[data-edit]').forEach(b => { b.disabled = lk; b.onclick = () => openRow(+b.dataset.edit); });

@@ -129,7 +129,7 @@ button.totop,button.totop:hover{display:block;width:100%;margin:8px 0 0;padding:
 .pp button.x{width:40px;height:40px;min-height:0;padding:0;border-radius:8px;background:transparent;border:0;color:var(--mu)}
 .dtl{padding:0}.open{width:100%;margin-top:14px;min-height:44px;font-size:14px}
 /* вид сотрудника: согласованная запись */
-.aps{float:right;font:700 13px Montserrat,sans-serif;letter-spacing:0;text-transform:none;color:var(--ok)}
+#mt{display:flex;justify-content:space-between;align-items:baseline;gap:2px 10px;flex-wrap:wrap}.aps{margin-left:auto;font:700 13px Montserrat,sans-serif;letter-spacing:0;text-transform:none;color:var(--ok)}
 
 .pamt{display:flex;align-items:center;background:var(--card2);border:1px solid var(--bd);border-radius:12px;padding:0 14px;min-height:64px}.pamt:focus-within{border-color:var(--ach);box-shadow:0 0 0 1px var(--ach)}
 .pamt input{border:0;background:transparent;box-shadow:none;font:800 30px Montserrat,sans-serif;text-align:right;min-height:60px;padding:0;min-width:0}.pamt input:focus{box-shadow:none}.pamt span{font:800 24px Montserrat,sans-serif;color:var(--mu);margin-left:8px}
@@ -149,12 +149,12 @@ button.totop,button.totop:hover{display:block;width:100%;margin:8px 0 0;padding:
 .wt thead{display:none}.wt,.wt tbody{display:block;width:100%;margin:0}
 #tb tr.r2{display:block;position:relative;overflow:hidden;padding:0;border:0;border-bottom:1px solid var(--bd)}#tb tr.r2:last-child{border-bottom:0}
 #tb tr.r2 td{display:block;padding:0;width:auto}
-#tb tr.r2{box-shadow:none;border-radius:12px}#tb tr.r2.aok{background:var(--okbg);border-bottom:0;margin:8px 0}#tb tr.r2.swp{border:1px solid var(--bd);margin:8px 0;background:var(--card)}#tb tr.r2.swp:last-child{border-bottom:1px solid var(--bd)}
-.sm{display:grid;grid-template-columns:1fr auto;gap:2px 12px;align-items:center;padding:10px 14px;min-height:60px}
-.sm .p{font-weight:700;font-size:15px;line-height:1.25;min-width:0}.sm .w{font-size:13px;color:var(--mu);line-height:1.25;grid-column:1}
+#tb tr.r2{box-shadow:none;border-radius:12px}#tb tr.r2.aok{background:var(--okbg);border-bottom:0;margin:6px 0}#tb tr.r2.swp{border:1px solid var(--bd);margin:6px 0;background:var(--card)}#tb tr.r2.swp:last-child{border-bottom:1px solid var(--bd)}
+.sm{display:grid;grid-template-columns:1fr auto;gap:1px 10px;align-items:center;padding:8px 12px}
+.sm .p{font-weight:700;font-size:15px;line-height:1.25;min-width:0}.sm .w{font-size:13px;color:var(--mu);line-height:1.25;grid-column:1;grid-row:2;min-width:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .sm .s{grid-column:2;grid-row:1;font-weight:800;font-size:15px;white-space:nowrap;text-align:right}
-.sm .act{grid-column:1/-1;grid-row:3;justify-self:end;margin-top:2px;display:flex;align-items:center;gap:16px}
-.lnk{border:0;background:none;padding:6px 0 6px 6px;min-height:32px;color:var(--ac);font:700 13px Montserrat,sans-serif;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px;cursor:pointer}.lnk:hover{background:none}
+.sm .act{grid-column:2;grid-row:2;justify-self:end;align-self:end;display:flex;align-items:center;gap:12px}@media(max-width:379px){tr.swp .sm .act{grid-column:1/-1;grid-row:3}}
+.lnk{border:0;background:none;padding:6px 0;min-height:32px;margin:-4px 0;color:var(--ac);font:700 13px Montserrat,sans-serif;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px;cursor:pointer}.lnk:hover{background:none}
 .chk{display:inline-flex;align-items:center;gap:5px;color:var(--ok);font:700 13px Montserrat,sans-serif}.chk i{width:18px;height:18px;border-radius:50%;background:var(--ok);display:inline-flex;align-items:center;justify-content:center}.chk svg{width:11px;height:11px;fill:none;stroke:#fff;stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round}
 .ed{padding:12px 0 14px;display:grid;gap:8px}
 .ed .amt{display:flex;align-items:center;border:1px solid var(--bd);border-radius:4px;background:var(--card2);padding:0 12px;min-height:48px}.ed .amt:focus-within{border-color:var(--ach);box-shadow:0 0 0 1px var(--ach)}

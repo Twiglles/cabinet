@@ -153,7 +153,7 @@ button.totop,button.totop:hover{display:block;width:100%;margin:8px 0 0;padding:
 .sm{display:grid;grid-template-columns:1fr auto;gap:2px 12px;align-items:center;padding:10px 14px;min-height:60px}
 .sm .p{font-weight:700;font-size:15px;line-height:1.25;min-width:0}.sm .w{font-size:13px;color:var(--mu);line-height:1.25;grid-column:1}
 .sm .s{grid-column:2;grid-row:1;font-weight:800;font-size:15px;white-space:nowrap;text-align:right}
-.sm .act{grid-column:2;grid-row:2;justify-self:end;display:flex;align-items:center;gap:16px}
+.sm .act{grid-column:1/-1;grid-row:3;justify-self:end;margin-top:2px;display:flex;align-items:center;gap:16px}
 .lnk{border:0;background:none;padding:6px 0 6px 6px;min-height:32px;color:var(--ac);font:700 13px Montserrat,sans-serif;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px;cursor:pointer}.lnk:hover{background:none}
 .chk{display:inline-flex;align-items:center;gap:5px;color:var(--ok);font:700 13px Montserrat,sans-serif}.chk i{width:18px;height:18px;border-radius:50%;background:var(--ok);display:inline-flex;align-items:center;justify-content:center}.chk svg{width:11px;height:11px;fill:none;stroke:#fff;stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round}
 .ed{padding:12px 0 14px;display:grid;gap:8px}
@@ -405,8 +405,8 @@ function drawMonth() {
   const rows = data[cur] = data[cur] || [];
   const lk = locked(), CKI = '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
   $('tb').innerHTML = rows.map((r, i) => {
-    if (r.k) return `<tr class="r2 aok" data-i="${i}"><td colspan="4"><div class="sm"><div class="p">${esc(r.p) || 'Без названия'}</div><div class="s">${rub(num(r.a))}</div><div class="w">${esc(r.w) || '&nbsp;'}</div><div class="act"><button class="lnk" data-dup="${i}">Копия</button><span class="chk"><i>${CKI}</i>Согласовано</span></div></div></td></tr>`;
-    return `<tr class="r2 swp" data-i="${i}"><td colspan="4">${lk ? '' : `<div class="delbg"><button class="dtap" data-swdel="${i}">Удалить</button></div>`}<div class="sm slide"><div class="p">${esc(r.p) || 'Без названия'}</div><div class="s">${rub(num(r.a))}</div><div class="w">${esc(r.w) || '&nbsp;'}</div><div class="act"><button class="lnk" data-dup="${i}">Копия</button><button class="lnk" data-edit="${i}">Изменить</button></div></div></td></tr>`;
+    if (r.k) return `<tr class="r2 aok" data-i="${i}"><td colspan="4"><div class="sm"><div class="p">${esc(r.p) || 'Без названия'}</div><div class="s">${rub(num(r.a))}</div><div class="w">${esc(r.w) || '&nbsp;'}</div><div class="act"><button class="lnk" data-dup="${i}">Копировать</button><span class="chk"><i>${CKI}</i>Согласовано</span></div></div></td></tr>`;
+    return `<tr class="r2 swp" data-i="${i}"><td colspan="4">${lk ? '' : `<div class="delbg"><button class="dtap" data-swdel="${i}">Удалить</button></div>`}<div class="sm slide"><div class="p">${esc(r.p) || 'Без названия'}</div><div class="s">${rub(num(r.a))}</div><div class="w">${esc(r.w) || '&nbsp;'}</div><div class="act"><button class="lnk" data-dup="${i}">Копировать</button><button class="lnk" data-edit="${i}">Изменить</button></div></div></td></tr>`;
   }).join('');
   $('tb').querySelectorAll('[data-edit]').forEach(b => { b.disabled = lk; b.onclick = () => openRow(+b.dataset.edit); });
   $('tb').querySelectorAll('[data-dup]').forEach(b => { b.disabled = lk; b.onclick = () => dupRow(+b.dataset.dup); });
